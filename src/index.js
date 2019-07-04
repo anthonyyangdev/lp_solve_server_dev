@@ -6,7 +6,8 @@
 // import bodyParser from 'body-parser';
 
 const fs = require('fs');
-const LP_SOLVE = './lp_solve/5.5.2.0/bin/lp_solve'
+// const LP_SOLVE = './lp_solve/5.5.2.0/bin/lp_solve'
+const LP_SOLVE = 'ls -la'
 
 const cors = require('cors');
 const uuidv4 = require('uuid/v4');
