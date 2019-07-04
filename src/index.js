@@ -29,7 +29,7 @@ app.get('/'), (req, res) => {
   res.send('Hello World!')
 }
 
-app.post('/', ['-la'], async (req, res) => {
+app.post('/', async (req, res) => {
   var content = req.body.code
   var TEMP = `${uuidv4()}.lp`
   fs.appendFile(TEMP, content, function (err) {
@@ -37,7 +37,7 @@ app.post('/', ['-la'], async (req, res) => {
   });
 
   //[TEMP, '-S', '-S8']
-  await exec(LP_SOLVE, function (err, data) {
+  await exec(LP_SOLVE, ['-la'], function (err, data) {
     fs.unlink(TEMP, function (e) {
       if (e) throw e;
     })
