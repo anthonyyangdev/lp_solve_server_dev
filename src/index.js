@@ -28,22 +28,25 @@ app.get('/'), (req, res) => {
   res.send('Hello World!')
 }
 
-app.post('/', (req, res) => {
+app.post('/', async (req, res) => {
   var content = req.body.code
-
   var TEMP = `${uuidv4()}.lp`
   fs.appendFile(TEMP, content, function (err) {
     if (err) throw err;
   });
-  shelljs.exec(`echo "${content}" >> ${TEMP}`)
 
-  exec(LP_SOLVE, [TEMP], function (err, data) {
-    console.log(data.toString());
+  await exec(LP_SOLVE, [TEMP, '-S', '-S8'], function (err, data) {
     fs.unlink(TEMP, function (err) {
       if (err) throw err;
     })
+
+    if (err === null) {
+      err = ''
+    }
+
     res.send({
-      result: data,
+      error: err,
+      result: data
     })
   })
 })
