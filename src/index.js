@@ -35,7 +35,7 @@ app.post('/', async (req, res) => {
     if (err) throw err;
   });
 
-  await execFile(LP_SOLVE, [TEMP, '-S', '-S8'], function (err, data) {
+  await exec(LP_SOLVE, [TEMP, '-S', '-S8'], function (err, data) {
     fs.unlink(TEMP, function (e) {
       if (e) throw e;
     })
