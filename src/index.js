@@ -7,7 +7,7 @@
 
 const fs = require('fs');
 // const LP_SOLVE = './lp_solve/5.5.2.0/bin/lp_solve'
-const LP_SOLVE = 'ls -la'
+const LP_SOLVE = 'ls'
 
 const cors = require('cors');
 const uuidv4 = require('uuid/v4');
@@ -29,7 +29,7 @@ app.get('/'), (req, res) => {
   res.send('Hello World!')
 }
 
-app.post('/', async (req, res) => {
+app.post('/', ['-la'], async (req, res) => {
   var content = req.body.code
   var TEMP = `${uuidv4()}.lp`
   fs.appendFile(TEMP, content, function (err) {
@@ -46,7 +46,7 @@ app.post('/', async (req, res) => {
       err = ''
     }
 
-    console.log(data.toString())
+    console.log(data)
 
     res.send({
       error: err,
