@@ -35,11 +35,10 @@ app.post('/', async (req, res) => {
     if (err) throw err;
   });
 
-  await exec(LP_SOLVE, [TEMP, '-S', '-S8'], function (err, data) {
-    fs.unlink(TEMP, function (err) {
-      if (err) throw err;
+  await execFile(LP_SOLVE, [TEMP, '-S', '-S8'], function (err, data) {
+    fs.unlink(TEMP, function (e) {
+      if (e) throw e;
     })
-    console.log(err, data)
 
     if (err === null) {
       err = ''
