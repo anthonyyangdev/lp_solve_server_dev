@@ -45,6 +45,8 @@ app.post('/', async (req, res) => {
       err = ''
     }
 
+    console.log(data.toString())
+
     res.send({
       error: err,
       result: data
