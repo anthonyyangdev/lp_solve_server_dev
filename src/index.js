@@ -36,7 +36,8 @@ app.post('/', async (req, res) => {
     if (err) throw err;
   });
 
-  await exec(LP_SOLVE, [TEMP, '-S', '-S8'], function (err, data) {
+  //[TEMP, '-S', '-S8']
+  await exec(LP_SOLVE, function (err, data) {
     fs.unlink(TEMP, function (e) {
       if (e) throw e;
     })
