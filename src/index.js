@@ -39,6 +39,7 @@ app.post('/', async (req, res) => {
     fs.unlink(TEMP, function (err) {
       if (err) throw err;
     })
+    console.log(err, data)
 
     if (err === null) {
       err = ''
