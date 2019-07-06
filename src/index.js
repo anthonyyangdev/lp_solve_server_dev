@@ -1,6 +1,6 @@
 require('dotenv/config');
 const fs = require('fs');
-const LP_SOLVE = 'lp_solve/5.5.2.0/bin/lp_solve'
+const LP_SOLVE = 'lp_solve'
 const cors = require('cors')
 const uuidv4 = require('uuid/v4')
 const bodyParser = require('body-parser')
