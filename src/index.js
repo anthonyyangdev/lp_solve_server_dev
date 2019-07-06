@@ -1,10 +1,9 @@
 require('dotenv/config');
 const fs = require('fs');
-const LP_SOLVE = 'lp_solve/5.5.2.0/bin/lp_solve'
+const LP_SOLVER = require('javascript-lp-solver')
 const cors = require('cors')
 const uuidv4 = require('uuid/v4')
 const bodyParser = require('body-parser')
-const exec = require('child_process').execFile
 const app = require('express')()
 
 app.use(cors());
@@ -21,25 +20,68 @@ const sections = [
   'Objective function limits',
 ]
 
+function listAllSolutions(result, solution) {
+  let response = `Objective function value: ${result}\n\n`
+  let max_length = 0;
+  for (var variable in solution) {
+    max_length = Math.max(variable.length, max_length)
+  }
+  for (var variable in solution) {
+    let spaces = max_length - variable.length
+    response += variable
+    for (var i = 0; i < spaces; i++) {
+      response += ' '
+    }
+    response += `: ${solution[variable]}\n`
+  }
+  console.log(response)
+  return response
+}
+
+function processSolution(solution) {
+  let response = "";
+  ({ bounded, feasible, result, ...solution } = solution)
+  response += feasible ? 'The solution is feasible.\n' : 'The solution is not feasible.\n'
+  response += bounded ? 'The solution is bounded.\n' : 'The solution is not bounded.\n'
+  response += result === null ? 'There are no solutions.' : listAllSolutions(result, solution)
+  return response
+}
+
+function processObjective(objective) {
+  return objective
+}
+
+function processSolver(solver) {
+  console.log(solver.toString())
+  return solver.Tableau.toString()
+}
+
 /**
  * Processes the data produced by [lp_solve] and returns a collection that maps
  * the {@var sections} names with the contents in {@var data}.
- * @param {string} data The data produced by [lp_solve].
+ * @param {string} solution The solution data produced by [lp_solve].
+ * @param {string} objective The information about objectives.
+ * Model/Solution
+ * 
+ * Constraints information
+ * 
+ * Objective Function Limits
  */
-function generateReport(data) {
+function generateReport(solution, objective, solver) {
   var report = {}
-  for (var i = 0; i < sections.length; i++) {
-    var start = data.indexOf(sections[i])
-    var end = (i === sections.length - 1) ? data.length : data.indexOf(sections[i + 1])
-    var section_content = data.substring(start, end)
-    report[sections[i]] = section_content
+  return {
+    solution: processSolution(solution),
+    objective: processObjective(objective),
+    analysis: processSolver(solver)
   }
+  // for (var i = 0; i < sections.length; i++) {
+  //   var start = data.indexOf(sections[i])
+  //   var end = (i === sections.length - 1) ? data.length : data.indexOf(sections[i + 1])
+  //   var section_content = data.substring(start, end)
+  //   report[sections[i]] = section_content
+  // }
   return report
 }
-
-app.use((req, res, next) => {
-  next();
-});
 
 app.get('/'), (req, res) => {
   res.send('Hello World!')
@@ -59,27 +101,13 @@ app.get('/'), (req, res) => {
  * 
  * Requires: The lp_solve library.
  */
-app.post('/', async (req, res) => {
+app.post('/', (req, res) => {
   var content = req.body.content
-  var TEMP = `${uuidv4()}.lp`
-  fs.appendFile(TEMP, content, function (err) {
-    if (err) throw err;
-  });
-
-  await exec(LP_SOLVE, [TEMP, '-S', '-S8'], function (err, data, stderr) {
-    fs.unlink(TEMP, function (e) {
-      if (e) throw e;
-    })
-    if (err === null) {
-      err = ''
-    }
-
-    res.send({
-      error: err,
-      result: data,
-      lp_solve_error: stderr,
-      report: generateReport(data)
-    })
+  var formatted_model = LP_SOLVER.ReformatLP(content)
+  var solution = LP_SOLVER.Solve(formatted_model)
+  var objective = LP_SOLVER.MultiObjective(formatted_model)
+  res.send({
+    result: generateReport(solution, objective, LP_SOLVER),
   })
 })
 

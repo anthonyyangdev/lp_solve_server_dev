@@ -1,7 +1,0 @@
-In this directory are some simple examples to show LP formulations in
-the LP format and the MPS format.
-
-We have examples using Special Ordered Sets (SOS) - ex1sos.lp, ex1sos.mps;
-and semi-continuous variables (ex1sc.lp, ex1sc.mps).
-
-
