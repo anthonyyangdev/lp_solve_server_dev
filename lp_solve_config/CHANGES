@@ -1,0 +1,15 @@
+10e to 10f
+- Create a patches/dispute directory and move controversial or disputed patches
+  there. Revert some of these disputed patches
+- example -> test
+- reinstate some of the examples in lp_example from old examples.
+
+These are changes from the 5.5.0.10 release to 10e
+
+- Various posted patches to the lpsolve mailing list.
+- Add automake/autoconf (no libtool yet)
+- Start a Unix manual page for lp_solve
+- Add some regression tests
+
+Patches from Andy Lutomirski in patches directory. All applied except
+lpsolve_api_tweaks.patch.

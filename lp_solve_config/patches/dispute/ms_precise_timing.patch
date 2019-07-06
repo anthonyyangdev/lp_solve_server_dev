@@ -1,0 +1,43 @@
+Index: lp_simplex.c
+===================================================================
+--- lp_simplex.c	(revision 2717)
++++ lp_simplex.c	(working copy)
+@@ -2115,9 +2115,9 @@
+     }
+     report(lp, NORMAL, "      The constraint matrix inf-norm is %g, with a dynamic range of %g.\n",
+                         lp->matA->infnorm, lp->matA->dynrange);
+-    report(lp, NORMAL, "      Time to load data was %.3f seconds, presolve used %.3f seconds,\n",
++    report(lp, NORMAL, "      Time to load data was %.5f seconds, presolve used %.5f seconds,\n",
+                         lp->timestart-lp->timecreate, lp->timepresolved-lp->timestart);
+-    report(lp, NORMAL, "       ... %.3f seconds in simplex solver, in total %.3f seconds.\n",
++    report(lp, NORMAL, "       ... %.5f seconds in simplex solver, in total %.5f seconds.\n",
+                         lp->timeend-lp->timepresolved, lp->timeend-lp->timecreate);
+   }
+   return( lp->spx_status );
+Index: shared/commonlib.c
+===================================================================
+--- shared/commonlib.c	(revision 2717)
++++ shared/commonlib.c	(working copy)
+@@ -11,6 +11,8 @@
+ #include <stdio.h>
+ #ifdef WIN32
+ # include <io.h>       /* Used in file search functions */
++# define WIN32_LEAN_AND_MEAN
++# include <windows.h>  /* Used in timeNow */
+ #endif
+ #include <ctype.h>
+ #include <string.h>
+@@ -826,6 +828,13 @@
+   return((double)time(NULL));
+ #elif defined CLOCKTIME
+   return((double)clock()/CLOCKS_PER_SEC /* CLK_TCK */);
++#elif defined WIN32
++  static LARGE_INTEGER freq;
++  LARGE_INTEGER now;
++  if (freq.QuadPart == 0)
++	  QueryPerformanceFrequency(&freq);
++  QueryPerformanceCounter(&now);
++  return (double)now.QuadPart / (double)freq.QuadPart;
+ #else
+   struct timeb buf;
+ 
