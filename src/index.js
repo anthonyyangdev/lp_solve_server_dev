@@ -40,6 +40,7 @@ function listAllSolutions(result, solution) {
 
 function processSolution(solution) {
   let response = "";
+  console.log(solution);
   ({ bounded, feasible, result, ...solution } = solution)
   response += feasible ? 'The solution is feasible.\n' : 'The solution is not feasible.\n'
   response += bounded ? 'The solution is bounded.\n' : 'The solution is not bounded.\n'
@@ -52,8 +53,8 @@ function processObjective(objective) {
 }
 
 function processSolver(solver) {
-  console.log(solver.toString())
-  return solver.Tableau.toString()
+//  console.log(solver.lastSolvedModel.tableau.model.constraints)
+  return {}
 }
 
 /**
@@ -68,19 +69,11 @@ function processSolver(solver) {
  * Objective Function Limits
  */
 function generateReport(solution, objective, solver) {
-  var report = {}
   return {
     solution: processSolution(solution),
     objective: processObjective(objective),
     analysis: processSolver(solver)
   }
-  // for (var i = 0; i < sections.length; i++) {
-  //   var start = data.indexOf(sections[i])
-  //   var end = (i === sections.length - 1) ? data.length : data.indexOf(sections[i + 1])
-  //   var section_content = data.substring(start, end)
-  //   report[sections[i]] = section_content
-  // }
-  return report
 }
 
 app.get('/'), (req, res) => {
