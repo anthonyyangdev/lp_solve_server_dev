@@ -1,8 +1,7 @@
 require('dotenv/config');
-const fs = require('fs');
+const to_JSON = require('./to_solver_json')
 const LP_SOLVER = require('javascript-lp-solver')
 const cors = require('cors')
-const uuidv4 = require('uuid/v4')
 const bodyParser = require('body-parser')
 const app = require('express')()
 
@@ -14,11 +13,11 @@ app.use(bodyParser.urlencoded({ extended: true }));
  * The different relevant sections produced by lp_solve given the 
  * parameters [-S, -S8].
  */
-const sections = [
-  'Model name',
-  'Actual values of the constraints',
-  'Objective function limits',
-]
+// const sections = [
+//   'Model name',
+//   'Actual values of the constraints',
+//   'Objective function limits',
+// ]
 
 function listAllSolutions(result, solution) {
   let response = `Objective function value: ${result}\n\n`
@@ -53,7 +52,7 @@ function processObjective(objective) {
 }
 
 function processSolver(solver) {
-//  console.log(solver.lastSolvedModel.tableau.model.constraints)
+  //  console.log(solver.lastSolvedModel.tableau.model.constraints)
   return {}
 }
 
@@ -96,7 +95,7 @@ app.get('/'), (req, res) => {
  */
 app.post('/', (req, res) => {
   var content = req.body.content
-  var formatted_model = LP_SOLVER.ReformatLP(content)
+  var formatted_model = to_JSON(content)
   var solution = LP_SOLVER.Solve(formatted_model)
   var objective = LP_SOLVER.MultiObjective(formatted_model)
   res.send({
