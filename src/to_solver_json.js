@@ -177,7 +177,8 @@ module.exports = function to_JSON(input) {
   // strings
   if (typeof input === "string") {
     input = input.split(';');
-    if (input[input.length - 1] !== '')
+    console.log('Input', input)
+    if (!(/\s*/).test(input[input.length - 1]))
       throw new Error(`Cannot parse at statement ${input.length}. Statements must end with ';'`)
     input.pop()
     input = input.map(x => x.trim())
