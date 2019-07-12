@@ -4,28 +4,30 @@ const UNRESTRICTED = 'unrestricted'
 const REGEX = {
   /* jshint ignore:start */
   is_blank: s => (/^\W{0,}$/).test(s),
-  is_int: s => (/^(?!\/\*)\W{0,}int\s{1,}/i).test(s),
-  is_bin: s => (/^(?!\/\*)\W{0,}bin\s{1,}/i).test(s),
-  is_unrestricted: s => (/^\s{0,}unrestricted\s{1,}/i).test(s),
-  is_objective: s => (/(max|min)(imize){0,}[^\n]*\:/i).test(s),
-  is_constraint: s => (/(\>|\<){0,}\=/i).test(s),
-
+  is_int: s => (/^int\s+[a-zA-Z](\_|\w)*\s*(\,\s*[a-zA-Z](\_|\w)*)*$/i).test(s),
+  is_bin: s => (/^bin\s+[a-zA-Z](\_|\w)*\s*(\,\s*[a-zA-Z](\_|\w)*)*$/i).test(s),
+  is_unrestricted: s => (/^free\s+[a-zA-Z](\_|\w)*\s*(\,\s*[a-zA-Z](\_|\w)*)*$/i).test(s),
+  is_objective: s => (/^(max|min)(imize)?\:\s*((\+|\-)?\s*\d*\.?\d*\s*[a-zA-Z](\_|\w)*)\s*((\+|\-){1}\s*\d*\.?\d*\s*[a-zA-Z](\_|\w)*)*$/i).test(s),
+  is_constraint: s =>
+    (/^([a-zA-Z]+\w*\:)?(\s*(\-|\+)?\s*\d*\.?\d*\s*[a-zA-Z](\_|\w)*)(\s*(\-|\+){1}\s*\d*\.?\d*\s*[a-zA-Z](\_|\w)*)*\s*(\<|\>)?\=?\s*\d+\.?\d*$/i).test(s),
+  // (/(\>|\<){0,}\=/i).test(s),
   // Fixed to prevent (+ or -) from being attached to variable names.
   parse_lhs: s => {
-    let arr = s.match(/(.*\:|(\-|\+){0,1}\s{0,}\d{0,}\.{0,1}\d{0,}\s{0,}[a-zA-Z])/gi)
-    arr = arr.map(d => d.replace(/\s+/, ""))
+    let arr = s.match(/(.*\:|(\-|\+)?\s*\d*\.?\d*\s*[a-zA-Z]+\w*)/gi)
+    // Trim the empty space inside the terms
+    arr = arr.map(d => d.replace(/\s+/, ''))
     return arr
   },
   parse_rhs: s => {
-    const value = s.match(/(\-|\+){0,1}\d{1,}\.{0,}\d{0,}\W{0,}\;{0,1}$/i)[0]
+    const value = s.match(/(\-|\+)?\d+\.?\d*$/i)[0]
     return parseFloat(value)
   },
-  parse_dir: s => s.match(/(\>|\<){0,}\=/gi)[0],
-  // parse_int: s => s.match(/[^\s|^\,]+/gi),
+  parse_dir: s => {
+    return s.match(/(<=|>=|\<|\>|=)/gi)[0]
+  },
   parse_num: s => s.match(/[^\s|^\,]+/gi),
   get_num: d => {
-    let num = d.match(/(\-|\+){0,1}(\W|^)\d+\.{0,1}\d{0,}/g)
-
+    let num = d.match(/(\-|\+)?\d+\.?\d*/g)
     // If it isn't a number, it might
     // be a standalone variable
     if (num === null) {
@@ -36,7 +38,6 @@ const REGEX = {
     return parseFloat(num)
   }, // Why accepting character \W before the first digit?
   get_word: d => d.match(/[A-Za-z].*/)[0]
-  /* jshint ignore:end */
 }
 
 function parseObjective(input, model) {
@@ -52,7 +53,7 @@ function parseObjective(input, model) {
     coeff = REGEX.get_num(d)
 
     // Get the variable name
-    var_name = REGEX.get_word(d).replace(/\;$/, "");
+    var_name = REGEX.get_word(d);
 
     // Make sure the variable is in the model
     model.variables[var_name] = model.variables[var_name] || {};
@@ -65,20 +66,38 @@ function parseTypeStatement(line, model, type) {
   const ary = REGEX.parse_num(line).slice(1);
   model[type] = model[type] || {};
   ary.forEach(function (d) {
-    d = d.replace(";", "");
-    model[type][d] = 1;
-  });
+    let my_type = type === INT ? 'int' : type === UNRESTRICTED ? 'free' : 'bin'
+    if (model[INT] && model[INT][d]) {
+      throw new Error(`Type constraint for ${d} was redeclared as ${my_type}. ${d} already is declared as type int.`)
+    }
+    if (model[UNRESTRICTED] && model[UNRESTRICTED][d]) {
+      throw new Error(`Type constraint for ${d} was redeclared as ${my_type}. ${d} already is declared as type free.`)
+    }
+    if (model[BIN] && model[BIN][d]) {
+      throw new Error(`Type constraint for ${d} was redeclared as ${my_type}. ${d} already is declared as type bin.`)
+    }
+
+    model[type][d] = 1
+  })
   return model
 }
 
 function parseConstraint(line, model, constraint) {
   constraints = {
-    ">=": "min",
-    "<=": "max",
-    "=": "equal"
+    '>=': "min",
+    '<=': "max",
+    '=': "equal",
+    '<': 'max',
+    '>': 'min'
   }
   var separatorIndex = line.indexOf(":");
-  var constraintExpression = (separatorIndex === -1) ? line : line.slice(separatorIndex + 1);
+  var constraintExpression
+  if (separatorIndex === -1) {
+    constraintExpression = line
+  } else {
+    constraint = line.slice(0, separatorIndex)
+    constraintExpression = line.slice(separatorIndex + 1)
+  }
 
   // Pull apart lhs
   const lhf = REGEX.parse_lhs(constraintExpression)
@@ -99,9 +118,9 @@ function parseConstraint(line, model, constraint) {
   // *** STEP 2 *** ///
   // Get the RHS out
   rhs = REGEX.parse_rhs(line);
-
   // *** STEP 3 *** ///
   // Get the Constrainer out
+
   line = constraints[REGEX.parse_dir(line)];
   model.constraints[constraint] = model.constraints[constraint] || {};
   model.constraints[constraint][line] = rhs;
@@ -123,13 +142,18 @@ function parseArray(input) {
     variables: {}
   }
   let constraint = 1
+  let noObjective = true
   for (var i = 0; i < input.length; i++) {
     // Get the string we're working with
     // Check why currentLine is mutable.
     let currentLine = input[i];
     // Test to see if we're the objective
     if (is_objective(currentLine)) {
-      model = parseObjective(currentLine, model)
+      if (noObjective)
+        model = parseObjective(currentLine, model)
+      else
+        throw new Error('Error: multiple objectives found.')
+      noObjective = false
     } else if (is_int(currentLine)) {
       model = parseTypeStatement(currentLine, model, INT)
     } else if (is_bin(currentLine)) {
@@ -140,34 +164,23 @@ function parseArray(input) {
       model = parseConstraint(currentLine, model, 'R' + constraint)
       constraint++
     } else {
-      console.log(`Cannot parse at line ${i}:`, `Content: ${currentLine}`)
+      throw new Error(`Cannot parse at statement ${i + 1}:\nContent: ${currentLine}`)
     }
   }
   return model
 }
 
-
-
-/*************************************************************
-* Method: to_JSON
-* Scope: Public:
-* Agruments: input: Whatever the user gives us
-* Purpose: Convert an unfriendly formatted LP
-*          into something that our library can
-*          work with
-**************************************************************/
 module.exports = function to_JSON(input) {
   // Handle input if its coming
   // to us as a hard string
   // instead of as an array of
   // strings
   if (typeof input === "string") {
-    let splits = []
-    input = input.split('\n');
-    input = input.map(e => {
-      splits.push(...e.split(';').filter(x => x !== ''))
-    })
-    input = splits
+    input = input.split(';');
+    if (input[input.length - 1] !== '')
+      throw new Error(`Cannot parse at statement ${input.length}. Statements must end with ';'`)
+    input.pop()
+    input = input.map(x => x.trim())
   }
 
   // Start iterating over the rows
