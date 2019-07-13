@@ -33,13 +33,11 @@ function listAllSolutions(result, solution) {
     }
     response += `: ${solution[variable]}\n`
   }
-  console.log(response)
   return response
 }
 
 function processSolution(solution) {
   let response = "";
-  console.log(solution);
   ({ bounded, feasible, result, ...solution } = solution)
   response += feasible ? 'The solution is feasible.\n' : 'The solution is not feasible.\n'
   response += bounded ? 'The solution is bounded.\n' : 'The solution is not bounded.\n'
@@ -94,10 +92,19 @@ app.get('/'), (req, res) => {
  * Requires: The lp_solve library.
  */
 app.post('/', (req, res) => {
-  var content = req.body.content
-  var formatted_model = to_JSON(content)
-  var solution = LP_SOLVER.Solve(formatted_model)
-  var objective = LP_SOLVER.MultiObjective(formatted_model)
+  const content = req.body.content
+  var formatted_model
+  try {
+    formatted_model = to_JSON(content)
+  } catch (e) {
+    res.send({
+      error: {
+        msg: e.message
+      }
+    })
+  }
+  const solution = LP_SOLVER.Solve(formatted_model)
+  const objective = LP_SOLVER.MultiObjective(formatted_model)
   res.send({
     result: generateReport(solution, objective, LP_SOLVER),
   })

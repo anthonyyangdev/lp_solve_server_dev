@@ -28,7 +28,7 @@ const REGEX = {
     let num = d.match(rxo.GET_NUM)
     // If it isn't a number, it might
     // be a standalone variable
-    if (num === null) {
+    if (isNaN(parseFloat(num[0]))) {
       num = d[0] === '-' ? -1 : 1
     } else {
       num = num[0];
@@ -151,8 +151,9 @@ function parseArray(input) {
     let currentLine = input[i];
     // Test to see if we're the objective
     if (is_objective(currentLine)) {
-      if (noObjective)
+      if (noObjective) {
         model = parseObjective(currentLine, model)
+      }
       else
         throw new Error('Error: multiple objectives found.')
       noObjective = false
@@ -179,8 +180,7 @@ module.exports = function to_JSON(input) {
   // strings
   if (typeof input === "string") {
     input = input.split(';');
-    console.log('Input', input)
-    if (!(/\s*/).test(input[input.length - 1]))
+    if (!(/^\s*$/).test(input[input.length - 1]))
       throw new Error(`Cannot parse at statement ${input.length}. Statements must end with ';'`)
     input.pop()
     input = input.map(x => x.trim())

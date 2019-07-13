@@ -10,6 +10,6 @@ module.exports = {
   RHS: /(\-|\+)?\d+\.?\d*$/i,
   RELATION: /(<=|>=|\<|\>|=)/gi,
   PARSE_NUM: /(\+|\-)?\s*(\d+\.?\d*|\.\d+|)?\s*[a-zA-Z](\_|\w)*/gi,
-  GET_NUM: /(\-|\+)?\s*(\d+\.?\d*|\.\d+|)?/g,
+  GET_NUM: /(\-|\+)?\s*(\d+\.?\d*|\.\d+|)?/,
   WORD: /[A-Za-z](\_|\w)*/
 } 
