@@ -1,43 +1,42 @@
+const rxo = require('../REGEX/REGEX')
+
 const INT = 'ints'
 const BIN = 'binaries'
 const UNRESTRICTED = 'unrestricted'
 const REGEX = {
-  /* jshint ignore:start */
-  is_blank: s => (/^\W{0,}$/).test(s),
-  is_int: s => (/^int\s+[a-zA-Z](\_|\w)*\s*(\,\s*[a-zA-Z](\_|\w)*)*$/i).test(s),
-  is_bin: s => (/^bin\s+[a-zA-Z](\_|\w)*\s*(\,\s*[a-zA-Z](\_|\w)*)*$/i).test(s),
-  is_unrestricted: s => (/^free\s+[a-zA-Z](\_|\w)*\s*(\,\s*[a-zA-Z](\_|\w)*)*$/i).test(s),
-  is_objective: s => (/^(max|min)(imize)?\:\s*((\+|\-)?\s*\d*\.?\d*\s*[a-zA-Z](\_|\w)*)\s*((\+|\-){1}\s*\d*\.?\d*\s*[a-zA-Z](\_|\w)*)*$/i).test(s),
-  is_constraint: s =>
-    (/^([a-zA-Z]+\w*\:)?(\s*(\-|\+)?\s*\d*\.?\d*\s*[a-zA-Z](\_|\w)*)(\s*(\-|\+){1}\s*\d*\.?\d*\s*[a-zA-Z](\_|\w)*)*\s*(\<|\>)?\=?\s*\d+\.?\d*$/i).test(s),
-  // (/(\>|\<){0,}\=/i).test(s),
-  // Fixed to prevent (+ or -) from being attached to variable names.
+  is_blank: s => (rxo.BLANK).test(s),
+  is_int: s => (rxo.INTEGER).test(s),
+  is_bin: s => (rxo.BINARY).test(s),
+  is_unrestricted: s => (rxo.FREE).test(s),
+  is_objective: s => (rxo.OBJECTIVE).test(s),
+  is_constraint: s => (rxo.CONSTRAINT).test(s),
   parse_lhs: s => {
-    let arr = s.match(/(.*\:|(\-|\+)?\s*\d*\.?\d*\s*[a-zA-Z]+\w*)/gi)
+    let arr = s.match(rxo.LHS)
     // Trim the empty space inside the terms
     arr = arr.map(d => d.replace(/\s+/, ''))
     return arr
   },
   parse_rhs: s => {
-    const value = s.match(/(\-|\+)?\d+\.?\d*$/i)[0]
+    const value = s.match(rxo.RHS)[0]
     return parseFloat(value)
   },
   parse_dir: s => {
     return s.match(/(<=|>=|\<|\>|=)/gi)[0]
   },
-  parse_num: s => s.match(/[^\s|^\,]+/gi),
+  parse_num: s => s.match(rxo.PARSE_NUM),
   get_num: d => {
-    let num = d.match(/(\-|\+)?\d+\.?\d*/g)
+    let num = d.match(rxo.GET_NUM)
     // If it isn't a number, it might
     // be a standalone variable
     if (num === null) {
       num = d[0] === '-' ? -1 : 1
     } else {
       num = num[0];
+      num.replace(/\s*/, '')
     }
     return parseFloat(num)
   }, // Why accepting character \W before the first digit?
-  get_word: d => d.match(/[A-Za-z].*/)[0]
+  get_word: d => d.match(rxo.WORD)[0]
 }
 
 function parseObjective(input, model) {
@@ -95,7 +94,7 @@ function parseConstraint(line, model, constraint) {
   if (separatorIndex === -1) {
     constraintExpression = line
   } else {
-    constraint = line.slice(0, separatorIndex)
+    constraint = line.slice(0, separatorIndex).trim()
     constraintExpression = line.slice(separatorIndex + 1)
   }
 
