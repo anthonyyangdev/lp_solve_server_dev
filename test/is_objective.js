@@ -15,7 +15,8 @@ test_cases = [
   'max:\n2x-5t_12-\n12w_23',
   'max:2x-52.12w-12.w_23',
   'max:2x-52.12w-12.0w_23',
-  'max: 2x + y'
+  'max: 2x + y',
+  'max    : 2x + y',
 ]
 
 const tester = new Tester(test_cases, REGEX.OBJECTIVE)

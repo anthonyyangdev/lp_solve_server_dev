@@ -95,6 +95,9 @@ function parseConstraint(line, model, constraint) {
     constraintExpression = line
   } else {
     constraint = line.slice(0, separatorIndex).trim()
+    if ((/(max|min)(imize)?/g).test(constraint)) {
+      throw new Error(`The name of a constraint cannot be the type of an optimization.\nName Given: ${constraint}`)
+    }
     constraintExpression = line.slice(separatorIndex + 1)
   }
 
