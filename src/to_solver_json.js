@@ -16,9 +16,6 @@ const REGEX = {
       return TYPES.UNRESTRICTED
     return false
   },
-  is_int: s => (rxo.INTEGER).test(s),
-  is_bin: s => (rxo.BINARY).test(s),
-  is_unrestricted: s => (rxo.FREE).test(s),
   is_objective: s => (rxo.OBJECTIVE).test(s),
   is_constraint: s => (rxo.CONSTRAINT).test(s),
   parse_lhs: s => {
