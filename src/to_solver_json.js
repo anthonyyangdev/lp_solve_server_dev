@@ -1,10 +1,21 @@
 const rxo = require('../REGEX/REGEX')
 
-const INT = 'ints'
-const BIN = 'binaries'
-const UNRESTRICTED = 'unrestricted'
+const TYPES = {
+  INT: 'ints',
+  BIN: 'binaries',
+  UNRESTRICTED: 'unrestricted'
+}
 const REGEX = {
   is_blank: s => (rxo.BLANK).test(s),
+  is_type_declaration: s => {
+    if ((rxo.BINARY).test(s))
+      return TYPES.BIN
+    if ((rxo.INTEGER).test(s))
+      return TYPES.INT
+    if ((rxo.FREE).test(s))
+      return TYPES.UNRESTRICTED
+    return false
+  },
   is_int: s => (rxo.INTEGER).test(s),
   is_bin: s => (rxo.BINARY).test(s),
   is_unrestricted: s => (rxo.FREE).test(s),
@@ -23,7 +34,7 @@ const REGEX = {
   parse_dir: s => {
     return s.match(/(<=|>=|\<|\>|=)/gi)[0]
   },
-  parse_num: s => s.match(rxo.PARSE_NUM),
+  parse_num: s => s.match(rxo.PARSE_NUM).slice(1).map(x => x.trim()),
   get_num: d => {
     let num = d.match(rxo.GET_NUM)
     // If it isn't a number, it might
@@ -62,27 +73,18 @@ function parseObjective(input, model) {
 }
 
 function parseTypeStatement(line, model, type) {
-  const ary = REGEX.parse_num(line).slice(1);
+  const ary = REGEX.parse_num(line);
   model[type] = model[type] || {};
   ary.forEach(function (d) {
-    let my_type = type === INT ? 'int' : type === UNRESTRICTED ? 'free' : 'bin'
-    if (model[INT] && model[INT][d]) {
+    if (model[type][d])
       throw new Error(`Type constraint for ${d} was redeclared as ${my_type}. ${d} already is declared as type int.`)
-    }
-    if (model[UNRESTRICTED] && model[UNRESTRICTED][d]) {
-      throw new Error(`Type constraint for ${d} was redeclared as ${my_type}. ${d} already is declared as type free.`)
-    }
-    if (model[BIN] && model[BIN][d]) {
-      throw new Error(`Type constraint for ${d} was redeclared as ${my_type}. ${d} already is declared as type bin.`)
-    }
-
     model[type][d] = 1
   })
   return model
 }
 
 function parseConstraint(line, model, constraint) {
-  constraints = {
+  const constraints = {
     '>=': "min",
     '<=': "max",
     '=': "equal",
@@ -111,7 +113,6 @@ function parseConstraint(line, model, constraint) {
     const coeff = REGEX.get_num(d);
     // Get the variable name
     const var_name = REGEX.get_word(d);
-
     // Make sure the variable is in the model
     model.variables[var_name] = model.variables[var_name] || {};
     model.variables[var_name][constraint] = coeff;
@@ -132,11 +133,9 @@ function parseConstraint(line, model, constraint) {
 
 function parseArray(input) {
   const {
-    is_bin,
     is_constraint,
-    is_int,
-    is_objective,
-    is_unrestricted } = REGEX
+    is_type_declaration,
+    is_objective } = REGEX
   let model = {
     opType: '',
     optimize: '_obj',
@@ -145,24 +144,19 @@ function parseArray(input) {
   }
   let constraint = 1
   let noObjective = true
-  for (var i = 0; i < input.length; i++) {
+  for (let i = 0; i < input.length; i++) {
     // Get the string we're working with
-    // Check why currentLine is mutable.
-    let currentLine = input[i];
+    const currentLine = input[i];
     // Test to see if we're the objective
     if (is_objective(currentLine)) {
-      if (noObjective) {
+      if (noObjective)
         model = parseObjective(currentLine, model)
-      }
       else
         throw new Error('Error: multiple objectives found.')
       noObjective = false
-    } else if (is_int(currentLine)) {
-      model = parseTypeStatement(currentLine, model, INT)
-    } else if (is_bin(currentLine)) {
-      model = parseTypeStatement(currentLine, model, BIN)
-    } else if (is_unrestricted(currentLine)) {
-      model = parseTypeStatement(currentLine, model, UNRESTRICTED)
+    } else if (is_type_declaration(currentLine)) {
+      const type = is_type_declaration(currentLine)
+      model = parseTypeStatement(currentLine, model, type)
     } else if (is_constraint(currentLine)) {
       model = parseConstraint(currentLine, model, 'R' + constraint)
       constraint++
@@ -173,21 +167,30 @@ function parseArray(input) {
   return model
 }
 
-module.exports = function to_JSON(input) {
+function stringToArray(input) {
+  const split_arr = input.split(';');
+  if (!(/^\s*$/).test(split_arr[split_arr.length - 1]))
+    throw new Error(`Cannot parse at statement ${split_arr.length}. Statements must end with ';'`)
+  split_arr.pop()
+  return split_arr.map(x => x.trim())
+}
+
+function to_JSON(input) {
   // Handle input if its coming
   // to us as a hard string
   // instead of as an array of
   // strings
-  if (typeof input === "string") {
-    input = input.split(';');
-    if (!(/^\s*$/).test(input[input.length - 1]))
-      throw new Error(`Cannot parse at statement ${input.length}. Statements must end with ';'`)
-    input.pop()
-    input = input.map(x => x.trim())
+  if (typeof input === 'string') {
+    input = stringToArray(input)
   }
-
   // Start iterating over the rows
   // to see what all we have
   return parseArray(input);
 }
 
+module.exports = {
+  to_JSON,
+  testable: {
+    stringToArray
+  }
+}

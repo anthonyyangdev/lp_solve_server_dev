@@ -1,5 +1,5 @@
 require('dotenv/config');
-const to_JSON = require('./to_solver_json')
+const to_JSON = require('./to_solver_json').to_JSON
 const LP_SOLVER = require('javascript-lp-solver')
 const cors = require('cors')
 const bodyParser = require('body-parser')
