@@ -1,11 +1,9 @@
 require('dotenv/config');
 const to_JSON = require('./to_solver_json').to_JSON
 const LP_SOLVER = require('javascript-lp-solver')
-const cors = require('cors')
 const bodyParser = require('body-parser')
 const app = require('express')()
 
-app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
