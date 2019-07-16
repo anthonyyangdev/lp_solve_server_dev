@@ -11,8 +11,19 @@ const CONSTRAINT_FORM = {
   RANGE: 'RANGE',
   RELATION: 'RELATION'
 }
+
+/**
+ * Holds functions that use regular expressions to parse inputs.
+ */
 const REGEX = {
+  /**
+   * @param {string} s
+   */
   is_blank: s => (rxo.BLANK).test(s),
+  /**
+   * Postcondition: The returned string is non-empty, so the string is truthy.
+   * @param {string} s A type declaration.
+   */
   is_type_declaration: s => {
     if ((rxo.BINARY).test(s))
       return TYPES.BIN
@@ -22,7 +33,16 @@ const REGEX = {
       return TYPES.UNRESTRICTED
     return false
   },
+  /**
+   * @param {string} s An objective function.
+   */
   is_objective: s => (rxo.OBJECTIVE).test(s),
+
+  /**
+   * Postcondition: The returned string is non-empty, so the string is truthy.
+   * Returns false if [s] is not a relation or a range constraint.
+   * @param {string} s An equation
+   */
   is_constraint: s => {
     if (rxo.RELATION_CONSTRAINT.test(s)) {
       return CONSTRAINT_FORM.RELATION
@@ -32,27 +52,67 @@ const REGEX = {
       return false
     }
   },
+  /**
+   * @param {string} s An expression.
+   * @returns {string[]} An array of terms
+   * @deprecated Please use parse_constants() and parse_variables() to parse expressions instead.
+   */
   parse_lhs: s => {
     let arr = s.match(rxo.LHS)
     // Trim the empty space inside the terms
     arr = arr.map(d => d.replace(/\s+/, ''))
     return arr
   },
+
+  /**
+   * @param {string} s An expression.
+   * @returns {number} The constant represented in equation on the right-hand side.
+   * @deprecated Please use parse_constants() and parse_variables() to parse expressions instead.
+   */
   parse_rhs: s => {
     const value = s.match(rxo.RHS)[0]
     return parseFloat(value)
   },
+  /**
+   * 
+   * Relations include:
+   * - [<=]
+   * - [>=]
+   * - [>]
+   * - [<]
+   * - [=]
+   * 
+   * @param {string} s An equation.
+   * @returns {string[]} An array of all the 'relation' strings in s in-order.
+   */
   parse_relations: s => {
     return s.match(/(<=|>=|[>=<])/g)
   },
+  /**
+   * Returns an array of all the terms in [s] with no variables and are constants.
+   * @param {string} s An expression.
+   */
   parse_constants: s => {
     return s.match(rxo.TERMS).map(x => x.trim()).filter(x => rxo.CONSTANT.test(x))
   },
+  /**
+   * Returns an array of all the terms in [s] with variables and are coefficients.
+   * @param {string} s An expression.
+   */
   parse_variables: s => {
     let terms = s.match(rxo.TERMS)
     return terms.map(x => x.trim()).filter(x => rxo.VARIABLE.test(x))
   },
+
+  /**
+   * Parses and returns a list of variables declared under some type.
+   * @param {string} s A type declaration statement.
+   */
   parse_num: s => s.match(rxo.PARSE_NUM).slice(1).map(x => x.trim()),
+  /**
+   * Parses and extracts the numerical part of a term.
+   * @param {string} s An expression term.
+   */
   get_num: d => {
     let num = d.match(rxo.GET_NUM)
     if (num[0] === undefined)
@@ -70,7 +130,11 @@ const REGEX = {
       value = mathjs.evaluate(`${num}1`)
     }
     return value
-  }, // Why accepting character \W before the first digit?
+  },
+  /**
+   * Parses and returns the variable part of an expression term.
+   * @param {string} d An expression term.
+   */
   get_word: d => d.match(rxo.WORD)[0]
 }
 
@@ -83,6 +147,17 @@ function Model() {
   }
 }
 
+/**
+ * 
+ * Parses the input which represents an objective function and adds the data
+ * into the linear optimization model.
+ * 
+ * Format of an objective function:
+ * - [ min | max | minimize | maximize ]: [expression];
+ * 
+ * @param {string} input 
+ * @param {Model} model 
+ */
 function parseObjective(input, model) {
   // Set up in model the opType
   model.opType = input.match(/(max|min)/gi)[0];
@@ -105,6 +180,19 @@ function parseObjective(input, model) {
   return model
 }
 
+/**
+ * 
+ * Parses a type declaration of variables and adds the variables and their
+ * associated types to the model. 
+ * Accepted types include:
+ * - int (integer)
+ * - bin (binary)
+ * - free
+ * 
+ * @param {string} line 
+ * @param {Model} model 
+ * @param {string} type 
+ */
 function parseTypeStatement(line, model, type) {
   const ary = REGEX.parse_num(line);
   model[type] = model[type] || {};
@@ -133,6 +221,22 @@ const inverseRelation = {
 }
 
 
+/**
+ * 
+ * Checks that the relations do not violate range specifications.
+ * Ranges must show continual increase/decrease, i.e. x > y > z | x < y < z.
+ * 
+ * Examples of invalid relations:
+ * - x < y > z
+ * - x > y < z
+ * - x = y = z
+ * - x = y < z
+ * - x > y = z
+ * 
+ * @param {string} first_relation 
+ * @param {string} second_relation 
+ * @returns {void}
+ */
 function verifyRange(first_relation, second_relation) {
 
   const conflict_error = () => {
@@ -174,6 +278,14 @@ function verifyRange(first_relation, second_relation) {
   }
 }
 
+/**
+ * 
+ * Parses a line representing an expression and returns the sum of the constant
+ * values in that expression. 
+ * 
+ * @param {string} line 
+ * @returns {number}
+ */
 function getConstant(line) {
   const constants = REGEX.parse_constants(line)
   if (constants.length === 0)
@@ -186,6 +298,20 @@ function getConstant(line) {
   return number
 }
 
+
+/**
+ * 
+ * Adds the constraint with the relation between the linear variable terms 
+ * and the constant value to the passed model. 
+ * This constraint is labeled in the model under the name argument.
+ * 
+ * @param {Model} model 
+ * @param {number} constant 
+ * @param {string[]} terms 
+ * @param {string} relation 
+ * @param {string} name 
+ * @returns {Model}
+ */
 function addConstraintToModel(model, constant, terms, relation, name) {
   // *** STEP 1 *** ///
   // Get the variables out
@@ -206,8 +332,16 @@ function addConstraintToModel(model, constant, terms, relation, name) {
   return model
 }
 
+/**
+ * 
+ * Parses a constraint that identifies the range of a variable.
+ * 
+ * @param {string} line 
+ * @param {Model} model 
+ * @param {string} name 
+ */
 function parseRangeConstraint(line, model, name) {
-  let relations = REGEX.parse_relations(line)
+  const relations = REGEX.parse_relations(line)
   assert.strictEqual(2, relations.length)
   verifyRange(relations[0], relations[1])
 
@@ -232,6 +366,50 @@ function parseRangeConstraint(line, model, name) {
   return model
 }
 
+/**
+ * 
+ * Parses a constraint that shows a relation between linear variables
+ * and a constant value.
+ * 
+ * @param {string} line 
+ * @param {Model} model 
+ * @param {string} name 
+ */
+function parseRelationConstraint(line, model, name) {
+  const relations = REGEX.parse_relations(line)
+  assert.strictEqual(1, relations.length)
+
+  const relation = relations[0]
+  const r_loc = line.indexOf(relation)
+  const r_len = relation.length
+
+  const left = line.slice(0, r_loc).trim()
+  const right = line.slice(r_loc + r_len).trim()
+
+  const left_constant = getConstant(left)
+  const right_constant = getConstant(right)
+
+  const left_variables = REGEX.parse_variables(left)
+  const right_variables = REGEX.parse_variables(right).map(x => `-${x}`)
+
+  const variables = left_variables.concat(right_variables)
+  const b_value = right_constant - left_constant
+
+  model = addConstraintToModel(model, b_value, variables, relation, name)
+
+  return model
+}
+
+
+/**
+ * 
+ * Adds the constraint given by the expression in the line to the model.
+ * 
+ * @param {string} line The expression.
+ * @param {Model} model The model representing the linear optimization model.
+ * @param {string} constraint The name of the constraint.
+ * @param {string} form The type of constraint: relation | range.
+ */
 function parseConstraint(line, model, constraint, form) {
 
   var separatorIndex = line.indexOf(":");
@@ -248,38 +426,21 @@ function parseConstraint(line, model, constraint, form) {
 
   if (form === CONSTRAINT_FORM.RANGE) {
     return parseRangeConstraint(constraintExpression, model, constraint)
+  } else if (form === CONSTRAINT_FORM.RELATION) {
+    return parseRelationConstraint(constraintExpression, model, constraint)
+  } else {
+    throw new Error('Not implemented')
   }
-
-  throw new Error('Not implemented')
-
-  // Pull apart lhs
-  const lhf = REGEX.parse_lhs(constraintExpression)
-
-  // *** STEP 1 *** ///
-  // Get the variables out
-  lhf.forEach(function (d) {
-    // Get the number if its there
-    const coeff = REGEX.get_num(d);
-    // Get the variable name
-    const var_name = REGEX.get_word(d);
-    // Make sure the variable is in the model
-    model.variables[var_name] = model.variables[var_name] || {};
-    model.variables[var_name][constraint] = coeff;
-  });
-
-  // *** STEP 2 *** ///
-  // Get the RHS out
-  rhs = REGEX.parse_rhs(line);
-  // *** STEP 3 *** ///
-  // Get the Constrainer out
-
-  line = relation[REGEX.parse_dir(line)];
-  model.constraints[constraint] = model.constraints[constraint] || {};
-  model.constraints[constraint][line] = rhs;
-
-  return model
 }
 
+/**
+ * 
+ * Parses the input as a string array that is representing a linear 
+ * optimization model. The returned Model object represents the linear optimization.
+ * 
+ * @param {string[]} input 
+ * @returns {Model}
+ */
 function parseArray(input) {
   const {
     is_constraint,
@@ -312,8 +473,20 @@ function parseArray(input) {
   return model
 }
 
+
+/**
+ * Converts a string representing a linear optimization model into a
+ * string array representing the same model.
+ * 
+ * The array is formed by using ';' as the delimiter.
+ * 
+ * @param {string} input 
+ * @returns {string[]}
+ */
 function stringToArray(input) {
-  let split_arr = input.split(';');
+  const DELIMITER = ';'
+
+  let split_arr = input.split(DELIMITER);
   if (!(/^\s*$/).test(split_arr[split_arr.length - 1]))
     throw new Error(`Cannot parse at statement ${split_arr.length}. Statements must end with ';'`)
   split_arr.pop()
@@ -324,6 +497,13 @@ function stringToArray(input) {
   return split_arr
 }
 
+/**
+ * 
+ * Parses the input of a linear optimization model. Returns an object
+ * representing that model.
+ * 
+ * @param {string | string[]} input 
+ */
 function to_JSON(input) {
   // Handle input if its coming
   // to us as a hard string
