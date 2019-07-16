@@ -486,6 +486,8 @@ function parseArray(input) {
 function stringToArray(input) {
   const DELIMITER = ';'
 
+  input = input.replace(/\/\*(.|\s)*\*\/|\/\/.*/g, '')
+
   let split_arr = input.split(DELIMITER);
   if (!(/^\s*$/).test(split_arr[split_arr.length - 1]))
     throw new Error(`Cannot parse at statement ${split_arr.length}. Statements must end with ';'`)
