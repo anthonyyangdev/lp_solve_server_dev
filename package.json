@@ -1,13 +1,13 @@
 {
-  "name": "lp_solver",
-  "version": "1.0.0",
-  "description": "Lp solver wrapped by a web app. This is the backend server.",
+  "name": "lpsolve_js",
+  "version": "0.7.0",
+  "description": "A backend server that processes requests for solving linear programming optimization problems.",
   "main": "index.js",
   "scripts": {
     "start": "nodemon src/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
+  "author": "Anthony Yang",
   "license": "ISC",
   "dependencies": {
     "body-parser": "^1.19.0",
