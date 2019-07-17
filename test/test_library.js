@@ -7,6 +7,7 @@ const addConstraint = solve.testable.addConstraintToModel
 const parseConstraint = solve.testable.parseConstraint
 
 const parseObjective = solve.testable.parseObjective
+const parseType = solve.testable.parseTypeStatement
 
 const Model = solve.testable.Model
 
@@ -169,6 +170,66 @@ assert.deepStrictEqual(result, {
   constraints: {},
   variables: { x: { _obj: 0 }, y: { _obj: 6 } },
   constant: 69
+})
+
+expr = 'int x, y'
+result = parseType(expr, new Model(), solve.testable.TYPES.INT)
+assert.deepStrictEqual(result, {
+  opType: '',
+  optimize: '_obj',
+  constraints: {},
+  variables: {},
+  ints: { x: 1, y: 1 }
+})
+
+expr = 'free x, y'
+result = parseType(expr, new Model(), solve.testable.TYPES.UNRESTRICTED)
+assert.deepStrictEqual(result, {
+  opType: '',
+  optimize: '_obj',
+  constraints: {},
+  variables: {},
+  unrestricted: { x: 1, y: 1 }
+})
+
+expr = 'bin x, y'
+result = parseType(expr, new Model(), solve.testable.TYPES.BIN)
+assert.deepStrictEqual(result, {
+  opType: '',
+  optimize: '_obj',
+  constraints: {},
+  variables: {},
+  binaries: { x: 1, y: 1 }
+})
+
+expr = 'int \nx, y'
+result = parseType(expr, new Model(), solve.testable.TYPES.INT)
+assert.deepStrictEqual(result, {
+  opType: '',
+  optimize: '_obj',
+  constraints: {},
+  variables: {},
+  ints: { x: 1, y: 1 }
+})
+
+expr = 'free \nx\n, y'
+result = parseType(expr, new Model(), solve.testable.TYPES.UNRESTRICTED)
+assert.deepStrictEqual(result, {
+  opType: '',
+  optimize: '_obj',
+  constraints: {},
+  variables: {},
+  unrestricted: { x: 1, y: 1 }
+})
+
+expr = 'bin \nx\n,\n \ny'
+result = parseType(expr, new Model(), solve.testable.TYPES.BIN)
+assert.deepStrictEqual(result, {
+  opType: '',
+  optimize: '_obj',
+  constraints: {},
+  variables: {},
+  binaries: { x: 1, y: 1 }
 })
 
 console.log('Passed')

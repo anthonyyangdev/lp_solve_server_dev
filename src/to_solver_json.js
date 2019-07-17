@@ -472,7 +472,7 @@ function parseArray(input) {
       model = parseConstraint(currentLine, model, 'R' + constraint, constraint_form)
       constraint++
     } else {
-      throw new Error(`Cannot parse at statement ${i + 1}:\nContent: ${currentLine}`)
+      throw new Error(`Cannot parse statement ${i + 1}:\nContent: ${currentLine}`)
     }
   }
   return model
