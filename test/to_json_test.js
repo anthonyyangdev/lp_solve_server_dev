@@ -1,8 +1,18 @@
-const solve = require('../src/to_solver_json')
-const s = require('javascript-lp-solver')
+const to_JSON = require('../src/to_solver_json').to_JSON
+const lpsolve = require('../src/lpsolve')
 const assert = require('assert')
 
-const text = ' maximize: 12y - x_1;  row1: 1x_1 <= 3.4; y <= 3; int x_1; bin y;'
+let text = 'maximize: 12y - x_1;  row1: 1x_1 <= 3.4; y <= 3; int x_1; bin y;'
+let model = to_JSON(text)
+let result = lpsolve(model).solution.result
+assert.deepStrictEqual(result, 12)
 
-const result = s.Solve(solve.to_JSON(text)).result
-assert.equal(result, 12)
+text = 'maximize: 12y - x_1 + 23;  row1: 1x_1 <= 3.4; y <= 3; int x_1; bin y;'
+model = to_JSON(text)
+result = lpsolve(model).solution.result
+assert.deepStrictEqual(result, 35)
+
+text = 'min: 12y - x_1 + 23;  row1: 1x_1 <= 3.4; y <= 3; int x_1; bin y;'
+model = to_JSON(text)
+result = lpsolve(model).solution.result
+assert.deepStrictEqual(result, 20)

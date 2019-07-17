@@ -16,7 +16,7 @@ test_cases = [
   'ew_23   : 2x + 4t < 23',
 ]
 
-const tester = new Tester(test_cases, REGEX.CONSTRAINT)
+const tester = new Tester(test_cases, REGEX.GENERAL_CONSTRAINT)
 tester.runTest()
 tester.mustFail('max1:2x-52.12w-..w_23 > 3')
 tester.mustFail('max1:2x-52.12w-.w_23 > 3')

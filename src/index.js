@@ -1,7 +1,6 @@
 require('dotenv/config');
-const to_JSON = require('./to_solver_json').to_JSON
+const lpsolve = require('./lpsolve')
 const cors = require('cors')
-const LP_SOLVER = require('javascript-lp-solver')
 const bodyParser = require('body-parser')
 const app = require('express')()
 
@@ -93,9 +92,8 @@ app.get('/'), (req, res) => {
  */
 app.post('/', (req, res) => {
   const content = req.body.content
-  var formatted_model
   try {
-    formatted_model = to_JSON(content)
+    var formatted_model = to_JSON(content)
   } catch (e) {
     res.send({
       error: {
@@ -103,10 +101,9 @@ app.post('/', (req, res) => {
       }
     })
   }
-  const solution = LP_SOLVER.Solve(formatted_model)
-  const objective = LP_SOLVER.MultiObjective(formatted_model)
+  const { solution, objective } = lpsolve(formatted_model)
   res.send({
-    result: generateReport(solution, objective, LP_SOLVER),
+    result: generateReport(solution, objective, ''),
   })
 })
 

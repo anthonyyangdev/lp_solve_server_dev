@@ -125,7 +125,7 @@ const REGEX = {
     // be a standalone variable
     let value = 1
     try {
-      value = mathjs.evaluate(num)
+      value = mathjs.evaluate(num) || value
     } catch (e) {
       value = mathjs.evaluate(`${num}1`)
     }
