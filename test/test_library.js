@@ -38,5 +38,52 @@ assert.deepStrictEqual(result, {
   variables: { x: { this_1: 2, this_2: 2 }, y: { this_1: 1, this_2: 1 } }
 })
 
+expr = 'this: 3 - 4 - 32 < 2x + -y <= 23'
+result = parseConstraint(expr, new Model(), 'R2', solve.testable.CONSTRAINT_FORM.RANGE)
+assert.deepStrictEqual(result, {
+  opType: '',
+  optimize: '_obj',
+  constraints: { this_1: { min: -33 }, this_2: { max: 23 } },
+  variables: { x: { this_1: 2, this_2: 2 }, y: { this_1: -1, this_2: -1 } }
+})
+
+// Relational constraints 
+
+expr = 'compare: 2x + 6y <= 12'
+result = parseConstraint(expr, new Model(), 'R3', solve.testable.CONSTRAINT_FORM.RELATION)
+assert.deepStrictEqual(result, {
+  opType: '',
+  optimize: '_obj',
+  constraints: { compare: { max: 12 } },
+  variables: { x: { compare: 2 }, y: { compare: 6 } }
+})
+
+expr = 'compare: 2x + 6y <= 12x'
+result = parseConstraint(expr, new Model(), 'R3', solve.testable.CONSTRAINT_FORM.RELATION)
+assert.deepStrictEqual(result, {
+  opType: '',
+  optimize: '_obj',
+  constraints: { compare: { max: 0 } },
+  variables: { x: { compare: -10 }, y: { compare: 6 } }
+})
+
+expr = 'compare: 2x + 6y + 12 - 32 + 2 = 12x - 12 + 4 - 2y'
+result = parseConstraint(expr, new Model(), 'R3', solve.testable.CONSTRAINT_FORM.RELATION)
+assert.deepStrictEqual(result, {
+  opType: '',
+  optimize: '_obj',
+  constraints: { compare: { equal: 10 } },
+  variables: { x: { compare: -10 }, y: { compare: 8 } }
+})
+
+expr = 'compare: 2x + 6y + 12 ----- -   \n   - 32 + 2 = -12x - 12 + 4 - 2y'
+result = parseConstraint(expr, new Model(), 'R3', solve.testable.CONSTRAINT_FORM.RELATION)
+assert.deepStrictEqual(result, {
+  opType: '',
+  optimize: '_obj',
+  constraints: { compare: { equal: 10 } },
+  variables: { x: { compare: 14 }, y: { compare: 8 } }
+})
+
 
 console.log('Passed')

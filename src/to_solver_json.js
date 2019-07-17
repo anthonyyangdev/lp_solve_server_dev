@@ -204,7 +204,7 @@ function parseTypeStatement(line, model, type) {
   return model
 }
 
-const relation = {
+const getRelation = {
   '>=': "min",
   '<=': "max",
   '=': "equal",
@@ -212,7 +212,7 @@ const relation = {
   '>': 'min'
 }
 
-const inverseRelation = {
+const getInverseRelation = {
   '>=': 'max',
   '>': 'max',
   '<=': 'min',
@@ -360,8 +360,8 @@ function parseRangeConstraint(line, model, name) {
   let right = line.slice(r2_loc + r2_len).trim()
   right = mathjs.evaluate(right) - C
 
-  model = addConstraintToModel(model, left, variables, inverseRelation[relations[0]], `${name}_1`)
-  model = addConstraintToModel(model, right, variables, relation[relations[1]], `${name}_2`)
+  model = addConstraintToModel(model, left, variables, getInverseRelation[relations[0]], `${name}_1`)
+  model = addConstraintToModel(model, right, variables, getRelation[relations[1]], `${name}_2`)
 
   return model
 }
@@ -395,7 +395,7 @@ function parseRelationConstraint(line, model, name) {
   const variables = left_variables.concat(right_variables)
   const b_value = right_constant - left_constant
 
-  model = addConstraintToModel(model, b_value, variables, relation, name)
+  model = addConstraintToModel(model, b_value, variables, getRelation[relation], name)
 
   return model
 }
