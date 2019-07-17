@@ -5,6 +5,9 @@ const getConstant = solve.testable.getConstant
 const parseRange = solve.testable.parseRangeConstraint
 const addConstraint = solve.testable.addConstraintToModel
 const parseConstraint = solve.testable.parseConstraint
+
+const parseObjective = solve.testable.parseObjective
+
 const Model = solve.testable.Model
 
 let expr = '2x + 42 - 231 + + + + + - - 12x'
@@ -85,5 +88,87 @@ assert.deepStrictEqual(result, {
   variables: { x: { compare: 14 }, y: { compare: 8 } }
 })
 
+// Parse objectives
+
+expr = 'max: 2x + 6y'
+result = parseObjective(expr, new Model())
+assert.deepStrictEqual(result, {
+  opType: 'max',
+  optimize: '_obj',
+  constraints: {},
+  variables: { x: { _obj: 2 }, y: { _obj: 6 } },
+  constant: 0
+})
+
+
+expr = 'max: --2x + 6y'
+result = parseObjective(expr, new Model())
+assert.deepStrictEqual(result, {
+  opType: 'max',
+  optimize: '_obj',
+  constraints: {},
+  variables: { x: { _obj: 2 }, y: { _obj: 6 } },
+  constant: 0
+})
+
+expr = 'max: --2x + 4x + 6y'
+result = parseObjective(expr, new Model())
+assert.deepStrictEqual(result, {
+  opType: 'max',
+  optimize: '_obj',
+  constraints: {},
+  variables: { x: { _obj: 6 }, y: { _obj: 6 } },
+  constant: 0
+})
+
+expr = 'max: --2x - 2x + 6y'
+result = parseObjective(expr, new Model())
+assert.deepStrictEqual(result, {
+  opType: 'max',
+  optimize: '_obj',
+  constraints: {},
+  variables: { x: { _obj: 0 }, y: { _obj: 6 } },
+  constant: 0
+})
+
+expr = 'min: --2x - 2x + 6y'
+result = parseObjective(expr, new Model())
+assert.deepStrictEqual(result, {
+  opType: 'min',
+  optimize: '_obj',
+  constraints: {},
+  variables: { x: { _obj: 0 }, y: { _obj: 6 } },
+  constant: 0
+})
+
+expr = 'minimize      : --2x - 2x + 6y'
+result = parseObjective(expr, new Model())
+assert.deepStrictEqual(result, {
+  opType: 'min',
+  optimize: '_obj',
+  constraints: {},
+  variables: { x: { _obj: 0 }, y: { _obj: 6 } },
+  constant: 0
+})
+
+expr = 'maximize:--2x - 2\n\nx + 6y'
+result = parseObjective(expr, new Model())
+assert.deepStrictEqual(result, {
+  opType: 'max',
+  optimize: '_obj',
+  constraints: {},
+  variables: { x: { _obj: 0 }, y: { _obj: 6 } },
+  constant: 0
+})
+
+expr = 'maximize:--2x - 2\n\nx + 6y + 23 -- 23  - \n - 23'
+result = parseObjective(expr, new Model())
+assert.deepStrictEqual(result, {
+  opType: 'max',
+  optimize: '_obj',
+  constraints: {},
+  variables: { x: { _obj: 0 }, y: { _obj: 6 } },
+  constant: 69
+})
 
 console.log('Passed')

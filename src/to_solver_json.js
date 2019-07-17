@@ -162,20 +162,25 @@ function parseObjective(input, model) {
   // Set up in model the opType
   model.opType = input.match(/(max|min)/gi)[0];
   // Pull apart lhs
-  const ary = REGEX.parse_lhs(input).slice(1);
+  const start = input.indexOf(':')
+  const line = input.slice(start + 1).trim()
 
-  // *** STEP 1 *** ///
-  // Get the variables out
-  ary.forEach(function (d) {
+  const constant = getConstant(line)
+  model.constant = constant || 0
+
+  const variables = REGEX.parse_variables(line)
+
+  variables.forEach(function (d) {
     // Get the number if it's there. This is fine.
-    coeff = REGEX.get_num(d)
-
+    let coeff = REGEX.get_num(d);
+    coeff = mathjs.evaluate(coeff)
     // Get the variable name
-    var_name = REGEX.get_word(d);
+    const var_name = REGEX.get_word(d);
 
     // Make sure the variable is in the model
     model.variables[var_name] = model.variables[var_name] || {};
-    model.variables[var_name]._obj = coeff;
+    let current_value = model.variables[var_name]._obj
+    model.variables[var_name]._obj = current_value ? current_value + coeff : coeff;
   });
   return model
 }

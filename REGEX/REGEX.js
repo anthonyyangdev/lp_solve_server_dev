@@ -19,5 +19,5 @@ module.exports = {
   GENERAL_CONSTRAINT: general_constraint,
   TERMS: /[+-\s]*(\d+\.?|\d*\.\d+)?\s*\w*/g,
   CONSTANT: /^[+-\s]*(\d+\.?|\d*\.\d+)$/,
-  VARIABLE: /^[+-\s]*(\d+\.?|\d*\.\d+)?[a-zA-Z]\w*$/
+  VARIABLE: /^[+-\s]*(\d+\.?|\d*\.\d+)?\s*[a-zA-Z]\w*$/
 } 
