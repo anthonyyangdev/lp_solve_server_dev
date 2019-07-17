@@ -1,4 +1,4 @@
-const to_JSON = require('../src/to_solver_json').to_JSON
+const to_JSON = require('../src/parser').to_JSON
 const lpsolve = require('../src/lpsolve')
 const assert = require('assert')
 
@@ -16,3 +16,8 @@ text = 'min: 12y - x_1 + 23;  row1: 1x_1 <= 3.4; y <= 3; int x_1; bin y;'
 model = to_JSON(text)
 result = lpsolve(model).solution.result
 assert.deepStrictEqual(result, 20)
+
+text = 'min: 12y - x_1 - 23 + 5;  row1: 1x_1 <= 3.4; y <= 3; int x_1; bin y;'
+model = to_JSON(text)
+result = lpsolve(model).solution.result
+assert.deepStrictEqual(result, -21)

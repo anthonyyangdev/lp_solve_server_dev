@@ -1,4 +1,4 @@
-const solve = require('../src/to_solver_json')
+const solve = require('../src/parser')
 const assert = require('assert')
 
 const getConstant = solve.testable.getConstant

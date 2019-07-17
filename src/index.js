@@ -1,4 +1,5 @@
 require('dotenv/config');
+const parse = require('./parser')
 const lpsolve = require('./lpsolve')
 const cors = require('cors')
 const bodyParser = require('body-parser')
@@ -93,7 +94,7 @@ app.get('/'), (req, res) => {
 app.post('/', (req, res) => {
   const content = req.body.content
   try {
-    var formatted_model = to_JSON(content)
+    var formatted_model = parse(content)
   } catch (e) {
     res.send({
       error: {

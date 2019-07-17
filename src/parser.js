@@ -1,4 +1,4 @@
-const rxo = require('../REGEX/REGEX')
+const regex = require('../REGEX/regex')
 const assert = require('assert')
 const mathjs = require('mathjs')
 
@@ -15,28 +15,28 @@ const CONSTRAINT_FORM = {
 /**
  * Holds functions that use regular expressions to parse inputs.
  */
-const REGEX = {
+const regex_func = {
   /**
    * @param {string} s
    */
-  is_blank: s => (rxo.BLANK).test(s),
+  is_blank: s => (regex.BLANK).test(s),
   /**
    * Postcondition: The returned string is non-empty, so the string is truthy.
    * @param {string} s A type declaration.
    */
   is_type_declaration: s => {
-    if ((rxo.BINARY).test(s))
+    if ((regex.BINARY).test(s))
       return TYPES.BIN
-    if ((rxo.INTEGER).test(s))
+    if ((regex.INTEGER).test(s))
       return TYPES.INT
-    if ((rxo.FREE).test(s))
+    if ((regex.FREE).test(s))
       return TYPES.UNRESTRICTED
     return false
   },
   /**
    * @param {string} s An objective function.
    */
-  is_objective: s => (rxo.OBJECTIVE).test(s),
+  is_objective: s => (regex.OBJECTIVE).test(s),
 
   /**
    * Postcondition: The returned string is non-empty, so the string is truthy.
@@ -44,9 +44,9 @@ const REGEX = {
    * @param {string} s An equation
    */
   is_constraint: s => {
-    if (rxo.RELATION_CONSTRAINT.test(s)) {
+    if (regex.RELATION_CONSTRAINT.test(s)) {
       return CONSTRAINT_FORM.RELATION
-    } else if (rxo.RANGE_CONSTRAINT.test(s)) {
+    } else if (regex.RANGE_CONSTRAINT.test(s)) {
       return CONSTRAINT_FORM.RANGE
     } else {
       return false
@@ -58,7 +58,7 @@ const REGEX = {
    * @deprecated Please use parse_constants() and parse_variables() to parse expressions instead.
    */
   parse_lhs: s => {
-    let arr = s.match(rxo.LHS)
+    let arr = s.match(regex.LHS)
     // Trim the empty space inside the terms
     arr = arr.map(d => d.replace(/\s+/, ''))
     return arr
@@ -70,7 +70,7 @@ const REGEX = {
    * @deprecated Please use parse_constants() and parse_variables() to parse expressions instead.
    */
   parse_rhs: s => {
-    const value = s.match(rxo.RHS)[0]
+    const value = s.match(regex.RHS)[0]
     return parseFloat(value)
   },
   /**
@@ -93,28 +93,28 @@ const REGEX = {
    * @param {string} s An expression.
    */
   parse_constants: s => {
-    return s.match(rxo.TERMS).map(x => x.trim()).filter(x => rxo.CONSTANT.test(x))
+    return s.match(regex.TERMS).map(x => x.trim()).filter(x => regex.CONSTANT.test(x))
   },
   /**
    * Returns an array of all the terms in [s] with variables and are coefficients.
    * @param {string} s An expression.
    */
   parse_variables: s => {
-    let terms = s.match(rxo.TERMS)
-    return terms.map(x => x.trim()).filter(x => rxo.VARIABLE.test(x))
+    let terms = s.match(regex.TERMS)
+    return terms.map(x => x.trim()).filter(x => regex.VARIABLE.test(x))
   },
 
   /**
    * Parses and returns a list of variables declared under some type.
    * @param {string} s A type declaration statement.
    */
-  parse_num: s => s.match(rxo.PARSE_NUM).slice(1).map(x => x.trim()),
+  parse_num: s => s.match(regex.PARSE_NUM).slice(1).map(x => x.trim()),
   /**
    * Parses and extracts the numerical part of a term.
    * @param {string} s An expression term.
    */
   get_num: d => {
-    let num = d.match(rxo.GET_NUM)
+    let num = d.match(regex.GET_NUM)
     if (num[0] === undefined)
       throw new Error('Server error. Source: get_num')
     else {
@@ -135,7 +135,7 @@ const REGEX = {
    * Parses and returns the variable part of an expression term.
    * @param {string} d An expression term.
    */
-  get_word: d => d.match(rxo.WORD)[0]
+  get_word: d => d.match(regex.WORD)[0]
 }
 
 function Model() {
@@ -168,14 +168,14 @@ function parseObjective(input, model) {
   const constant = getConstant(line)
   model.constant = constant || 0
 
-  const variables = REGEX.parse_variables(line)
+  const variables = regex_func.parse_variables(line)
 
   variables.forEach(function (d) {
     // Get the number if it's there. This is fine.
-    let coeff = REGEX.get_num(d);
+    let coeff = regex_func.get_num(d);
     coeff = mathjs.evaluate(coeff)
     // Get the variable name
-    const var_name = REGEX.get_word(d);
+    const var_name = regex_func.get_word(d);
 
     // Make sure the variable is in the model
     model.variables[var_name] = model.variables[var_name] || {};
@@ -199,7 +199,7 @@ function parseObjective(input, model) {
  * @param {string} type 
  */
 function parseTypeStatement(line, model, type) {
-  const ary = REGEX.parse_num(line);
+  const ary = regex_func.parse_num(line);
   model[type] = model[type] || {};
   ary.forEach(function (d) {
     if (model[type][d])
@@ -292,7 +292,7 @@ function verifyRange(first_relation, second_relation) {
  * @returns {number}
  */
 function getConstant(line) {
-  const constants = REGEX.parse_constants(line)
+  const constants = regex_func.parse_constants(line)
   if (constants.length === 0)
     return 0
   let c = ''
@@ -322,10 +322,10 @@ function addConstraintToModel(model, constant, terms, relation, name) {
   // Get the variables out
   terms.forEach(function (d) {
     // Get the number if its there
-    let coeff = REGEX.get_num(d);
+    let coeff = regex_func.get_num(d);
     coeff = mathjs.evaluate(coeff)
     // Get the variable name
-    const var_name = REGEX.get_word(d);
+    const var_name = regex_func.get_word(d);
     // Make sure the variable is in the model
     model.variables[var_name] = model.variables[var_name] || {};
     let current_value = model.variables[var_name][name]
@@ -346,7 +346,7 @@ function addConstraintToModel(model, constant, terms, relation, name) {
  * @param {string} name 
  */
 function parseRangeConstraint(line, model, name) {
-  const relations = REGEX.parse_relations(line)
+  const relations = regex_func.parse_relations(line)
   assert.strictEqual(2, relations.length)
   verifyRange(relations[0], relations[1])
 
@@ -357,7 +357,7 @@ function parseRangeConstraint(line, model, name) {
 
   const center = line.slice(r1_loc + r1_len, r2_loc).trim()
   const C = getConstant(center)
-  const variables = REGEX.parse_variables(center)
+  const variables = regex_func.parse_variables(center)
 
   let left = line.slice(0, r1_loc).trim()
   left = mathjs.evaluate(left) - C
@@ -381,7 +381,7 @@ function parseRangeConstraint(line, model, name) {
  * @param {string} name 
  */
 function parseRelationConstraint(line, model, name) {
-  const relations = REGEX.parse_relations(line)
+  const relations = regex_func.parse_relations(line)
   assert.strictEqual(1, relations.length)
 
   const relation = relations[0]
@@ -394,8 +394,8 @@ function parseRelationConstraint(line, model, name) {
   const left_constant = getConstant(left)
   const right_constant = getConstant(right)
 
-  const left_variables = REGEX.parse_variables(left)
-  const right_variables = REGEX.parse_variables(right).map(x => `-${x}`)
+  const left_variables = regex_func.parse_variables(left)
+  const right_variables = regex_func.parse_variables(right).map(x => `-${x}`)
 
   const variables = left_variables.concat(right_variables)
   const b_value = right_constant - left_constant
@@ -450,7 +450,7 @@ function parseArray(input) {
   const {
     is_constraint,
     is_type_declaration,
-    is_objective } = REGEX
+    is_objective } = regex_func
   let model = new Model()
   let constraint = 1
   let noObjective = true
@@ -537,7 +537,7 @@ module.exports = {
     parseTypeStatement,
     parseObjective,
     Model,
-    REGEX,
+    REGEX: regex_func,
     CONSTRAINT_FORM,
     TYPES
   }
