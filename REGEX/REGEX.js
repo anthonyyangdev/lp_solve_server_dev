@@ -19,5 +19,7 @@ module.exports = {
   GENERAL_CONSTRAINT: general_constraint,
   TERMS: /[+-\s]*(\d+\.?|\d*\.\d+)?\s*\w*/g,
   CONSTANT: /^[+-\s]*(\d+\.?|\d*\.\d+)$/,
-  VARIABLE: /^[+-\s]*(\d+\.?|\d*\.\d+)?\s*[a-zA-Z]\w*$/
+  VARIABLE: /^[+-\s]*(\d+\.?|\d*\.\d+)?\s*[a-zA-Z]\w*$/,
+  FOR_WHERE: /\s*(for\s*[a-zA-Z]\w*\s*\=\s*\d+\s*to\s*\d+(\s*\,\s*[a-zA-Z]\w*\s*\=\s*\d+\s*to\s*\d+)*|where\s*[a-zA-Z]\w*\s*\=\s*\d+(\s*\,\s*[a-zA-Z]\w*\s*\=\s*\d+\s*))(\s*\,\s*(for\s*[a-zA-Z]\w*\s*\=\s*\d+\s*to\s*\d+(\s*\,\s*[a-zA-Z]\w*\s*\=\s*\d+\s*to\s*\d+)*|where\s*[a-zA-Z]\w*\s*\=\s*\d+(\s*\,\s*[a-zA-Z]\w*\s*\=\s*\d+\s*)*))*\s*\:/gm,
+  SUMMATION: /SUM\s*\[\s*[a-zA-Z]\w*\s*\=\s*\d+\s*to\s*\d+\s*\]\s*\(.*\)/,
 } 
