@@ -79,6 +79,7 @@ const regex_func = {
   is_objective: s => (regex.OBJECTIVE).test(s),
   is_for_statement: s => regex.FOR.test(s),
   is_summation: s => regex.SUMMATION.test(s),
+  is_set_declare: s => regex.SET.test(s),
   /**
    * Postcondition: The returned string is non-empty, so the string is truthy.
    * Returns false if [s] is not a relation or a range constraint.
@@ -190,7 +191,8 @@ function Model() {
     opType: '',
     optimize: '_obj',
     constraints: {},
-    variables: {}
+    variables: {},
+    set: {}
   }
 }
 
@@ -255,7 +257,7 @@ function parseForStatement(line, model, noObjective, name) {
 }
 
 
-function parseSummation(line) {
+function parseSummation(line, model) {
   const front = line.indexOf('(')
   const last = line.lastIndexOf(')')
   const sum_statement = line.slice(0, front).trim()
@@ -274,9 +276,9 @@ function parseSummation(line) {
   }
 
   let expression = line.slice(front + 1, last).trim()
-  function innerEval(line, name) {
+  function innerEval(line) {
     if (regex.SUMMATION.test(line)) {
-      return parseSummation(line)
+      return parseSummation(line, model)
     } else {
       return line
     }
@@ -306,6 +308,13 @@ function parseSummation(line) {
     env.current++
   }
   full_expression = name + full_expression
+
+  for (let vars in model.set) {
+    const regex = new RegExp(vars, 'g');
+    const value = model.set[vars]
+    full_expression = full_expression.replace(regex, value)
+  }
+
   return full_expression
 }
 
@@ -326,7 +335,14 @@ function parseObjective(input, model) {
   model.opType = input.match(/(max|min)/gi)[0];
   // Pull apart lhs
   const start = input.indexOf(':')
-  const line = input.slice(start + 1).trim()
+  let line = input.slice(start + 1).trim()
+
+  // Change variables here for values here
+  for (let vars in model.set) {
+    const regex = new RegExp(vars, 'g');
+    const value = model.set[vars]
+    line = line.replace(regex, value)
+  }
 
   const constant = getConstant(line)
   model.constant = constant || 0
@@ -585,8 +601,8 @@ function parseRelationConstraint(line, model, name) {
  */
 function parseConstraint(line, model, constraint, form) {
 
-  var separatorIndex = line.indexOf(":");
-  var constraintExpression
+  const separatorIndex = line.indexOf(":");
+  let constraintExpression = ''
   if (separatorIndex === -1) {
     constraintExpression = line
   } else {
@@ -595,6 +611,12 @@ function parseConstraint(line, model, constraint, form) {
       throw new Error(`The name of a constraint cannot be the type of an optimization.\nName Given: ${constraint}`)
     }
     constraintExpression = line.slice(separatorIndex + 1).trim()
+  }
+
+  for (let vars in model.set) {
+    const regex = new RegExp(vars, 'g');
+    const value = model.set[vars]
+    constraintExpression = constraintExpression.replace(regex, value)
   }
 
   if (form === CONSTRAINT_FORM.RANGE) {
@@ -606,26 +628,49 @@ function parseConstraint(line, model, constraint, form) {
   }
 }
 
+function parseSetDeclare(line, model) {
+  const DELIMIT = 'set'
+  const start = line.indexOf(DELIMIT)
+  const len = DELIMIT.length
+  const expr = line.slice(start + len)
+  const EQUAL = '='
+  const name = expr.slice(0, expr.indexOf(EQUAL)).trim()
+  const right = expr.slice(expr.indexOf(EQUAL) + 1).trim()
+  const validVariable = /^[a-zA-Z]\w*$/
+
+  if (!validVariable.test(name))
+    throw new Error(`The variable name is not valid for value declaration ${line}`)
+  const value = mathjs.evaluate(right)
+
+  console.log(true, model)
+  model.set[name] = value
+  console.log(false, model)
+
+  return model
+}
+
 function eval(line, model, noObjective, constraint) {
   const {
     is_constraint,
     is_type_declaration,
     is_objective,
     is_for_statement,
-    is_summation } = regex_func
+    is_summation, is_set_declare } = regex_func
   if (is_objective(line)) {
     if (noObjective)
       model = parseObjective(line, model)
     else
       throw new Error('Error: multiple objectives found.')
     noObjective = false
+  } else if (is_set_declare(line)) {
+    model = parseSetDeclare(line, model)
   } else if (is_for_statement(line)) {
     const newModel = parseForStatement(line, model, noObjective, constraint)
     model = newModel.model
     constraint = newModel.constraint
     noObjective = newModel.noObjective
   } else if (is_summation(line)) {
-    const expression = parseSummation(line)
+    const expression = parseSummation(line, model)
     const newModel = eval(expression, model, noObjective, constraint)
     model = newModel.model
     constraint = newModel.constraint

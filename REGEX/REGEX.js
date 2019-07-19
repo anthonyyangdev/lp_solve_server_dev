@@ -22,5 +22,5 @@ module.exports = {
   VARIABLE: /^[+-\s]*(\d+\.?|\d*\.\d+)?\s*[a-zA-Z]\w*$/,
   FOR: /^for\s+[a-zA-Z]+\s*=\s*\d+\s+to\s+\d+\s*(\s*\,\s*[a-zA-Z]+\s*=\s*\d+\s+to\s+\d+)*\s*:/,
   SUMMATION: /^sum\s*\[\s*[a-zA-Z]+\s*=\s*\d+\s+to\s+\d+\s*\]\s*\(\s*.*\s*\)/i,
-
+  SET: /set\s+/
 } 
