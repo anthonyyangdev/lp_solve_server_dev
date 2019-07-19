@@ -8,11 +8,16 @@ const parseConstraint = solve.testable.parseConstraint
 
 const parseObjective = solve.testable.parseObjective
 const parseType = solve.testable.parseTypeStatement
+const parseFor = solve.testable.parseForStatement
 
 const Model = solve.testable.Model
 
-let expr = '2x + 42 - 231 + + + + + - - 12x'
-let result = getConstant(expr)
+let expr = 'for i = 1 to 3: x_i + y_i <= 23'
+let result = parseFor(expr, new Model(), false, '1')
+console.log(result.model)
+
+expr = '2x + 42 - 231 + + + + + - - 12x'
+result = getConstant(expr)
 assert.strictEqual(result, -189)
 
 expr = ['2x', '3y', '+  23x', ' -- - 3y']

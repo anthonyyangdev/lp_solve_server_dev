@@ -1,6 +1,7 @@
 const regex = require('../REGEX/regex')
 const assert = require('assert')
 const mathjs = require('mathjs')
+const removeComments = require('./helper/removeComments')
 
 const TYPES = {
   INT: 'ints',
@@ -60,10 +61,6 @@ const regex_func = {
     return false
   },
   /**
-   * @param {string} s
-   */
-  is_blank: s => (regex.BLANK).test(s),
-  /**
    * Postcondition: The returned string is non-empty, so the string is truthy.
    * @param {string} s A type declaration.
    */
@@ -80,7 +77,8 @@ const regex_func = {
    * @param {string} s An objective function.
    */
   is_objective: s => (regex.OBJECTIVE).test(s),
-
+  is_for_statement: s => regex.FOR.test(s),
+  is_summation: s => regex.SUMMATION.test(s),
   /**
    * Postcondition: The returned string is non-empty, so the string is truthy.
    * Returns false if [s] is not a relation or a range constraint.
@@ -195,6 +193,122 @@ function Model() {
     variables: {}
   }
 }
+
+/**
+ * 
+ * @param {string} line 
+ * @param {Model} model 
+ * @param {boolean} noObjective 
+ * @param {string} name 
+ * @returns {{model: Model, noObjective: boolean, name: string}}
+ */
+function parseForStatement(line, model, noObjective, name) {
+  const index = line.indexOf(':')
+  const for_statement = line.slice(0, index)
+  // Get the assignment variable, and get the range of that variable.
+  // Based on the previous regex test, there are at most and at least 2 numbers.
+
+  // Match numbers
+  const numbers = for_statement.match(/\d+/g)
+  // The only word besides for is the assignment variable and 'to':
+  // Slice 1 to ignore the first term.
+  const variables = for_statement.match(/[a-zA-Z]+/g).slice(1).filter(x => x !== 'to')
+  let env = []
+  for (let i = 0; i < variables.length; i++) {
+    const first = numbers[i * 2]
+    const second = numbers[i * 2 + 1]
+    env.push({
+      name: variables[i],
+      start: parseInt(first),
+      end: parseInt(second),
+      current: parseInt(first)
+    })
+  }
+  function loop(arr, func, init) {
+    function helper(arr, func, init, arr2) {
+      if (arr.length === 0)
+        return func(init, arr2)
+      while (arr[0].current <= arr[0].end) {
+        init = helper(arr.slice(1), func, init, arr2)
+        arr[0].current++
+      }
+      arr[0].current = arr[0].start
+      return init
+    }
+    return helper(arr, func, init, arr)
+  }
+
+  const subscript_regex = /_\w+/g
+  return loop(env, function (current, vars) {
+    let expr = line.slice(index + 1).trim()
+    const subscripts = expr.match(subscript_regex)
+    const subscripts_transformed = subscripts.map(x => {
+      for (let v of vars)
+        x = x.replace(v.name, v.current)
+      return x
+    })
+    for (let i = 0; i < subscripts.length; i++) {
+      expr = expr.replace(subscripts[i], subscripts_transformed[i])
+    }
+    return eval(expr, current.model, current.noObjective, current.constraint)
+  }, { model, noObjective, constraint: name })
+}
+
+
+function parseSummation(line) {
+  const front = line.indexOf('(')
+  const last = line.lastIndexOf(')')
+  const sum_statement = line.slice(0, front).trim()
+  // Get the assignment variable, and get the range of that variable.
+  // Based on the previous regex test, there are at most and at least 2 numbers.
+
+  // Match numbers
+  const [start, end] = sum_statement.match(/\d+/g)
+  // The only word besides for is the assignment variable and 'to':
+  // Slice 1 to ignore the first term.
+  const variable = sum_statement.match(/[a-zA-Z]+/g)[1]
+  let env = {
+    name: variable,
+    current: parseInt(start),
+    end: parseInt(end)
+  }
+
+  let expression = line.slice(front + 1, last).trim()
+  function innerEval(line, name) {
+    if (regex.SUMMATION.test(line)) {
+      return parseSummation(line)
+    } else {
+      return line
+    }
+  }
+  expression = innerEval(expression)
+
+  let hasName = expression.indexOf(':')
+  let name = ''
+  if (hasName !== -1) {
+    name = expression.slice(0, hasName + 1).trim()
+    expression = expression.slice(hasName + 1).trim()
+  }
+
+  const remaining = line.slice(last + 1).trim()
+  let full_expression = ''
+  const subscript_regex = /_\w+/g
+  while (env.current <= env.end) {
+    const subscripts = expression.match(subscript_regex)
+    const subscripts_transformed = subscripts.map(x => {
+      return x.replace(env.name, env.current)
+    })
+    let expr = expression
+    for (let i = 0; i < subscripts.length; i++) {
+      expr = expr.replace(subscripts[i], subscripts_transformed[i])
+    }
+    full_expression += env.current === env.end ? `${expr} ${remaining}` : `${expr} + `
+    env.current++
+  }
+  full_expression = name + full_expression
+  return full_expression
+}
+
 
 /**
  * 
@@ -353,6 +467,7 @@ function getConstant(line) {
 }
 
 
+var dupConstraint = 0
 /**
  * 
  * Adds the constraint with the relation between the linear variable terms 
@@ -369,6 +484,12 @@ function getConstant(line) {
 function addConstraintToModel(model, constant, terms, relation, name) {
   // *** STEP 1 *** ///
   // Get the variables out
+  if (model.constraints[name] !== undefined) {
+    name = `${name}${dupConstraint}`
+    dupConstraint++
+  }
+  model.constraints[name] = {};
+  model.constraints[name][relation] = constant;
   terms.forEach(function (d) {
     // Get the number if its there
     let coeff = regex_func.get_num(d);
@@ -380,8 +501,6 @@ function addConstraintToModel(model, constant, terms, relation, name) {
     let current_value = model.variables[var_name][name]
     model.variables[var_name][name] = current_value ? current_value + coeff : coeff;
   });
-  model.constraints[name] = model.constraints[name] || {};
-  model.constraints[name][relation] = constant;
 
   return model
 }
@@ -491,13 +610,26 @@ function eval(line, model, noObjective, constraint) {
   const {
     is_constraint,
     is_type_declaration,
-    is_objective } = regex_func
+    is_objective,
+    is_for_statement,
+    is_summation } = regex_func
   if (is_objective(line)) {
     if (noObjective)
       model = parseObjective(line, model)
     else
       throw new Error('Error: multiple objectives found.')
     noObjective = false
+  } else if (is_for_statement(line)) {
+    const newModel = parseForStatement(line, model, noObjective, constraint)
+    model = newModel.model
+    constraint = newModel.constraint
+    noObjective = newModel.noObjective
+  } else if (is_summation(line)) {
+    const expression = parseSummation(line)
+    const newModel = eval(expression, model, noObjective, constraint)
+    model = newModel.model
+    constraint = newModel.constraint
+    noObjective = newModel.noObjective
   } else if (is_type_declaration(line)) {
     const type = is_type_declaration(line)
     model = parseTypeStatement(line, model, type)
@@ -535,7 +667,6 @@ function parseArray(input) {
   return model
 }
 
-
 /**
  * Converts a string representing a linear optimization model into a
  * string array representing the same model.
@@ -549,7 +680,7 @@ function stringToArray(input) {
 
   const DELIMITER = ';'
 
-  input = input.replace(/\/\*(.|\s)*\*\/|\/\/.*/g, '')
+  input = removeComments(input)
 
   let split_arr = input.split(DELIMITER);
   if (!(/^\s*$/).test(split_arr[split_arr.length - 1]))
@@ -590,6 +721,7 @@ module.exports = {
     parseArray,
     parseConstraint,
     parseRangeConstraint,
+    parseForStatement,
     addConstraintToModel,
     getConstant,
     verifyRange,

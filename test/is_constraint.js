@@ -13,7 +13,7 @@ test_cases = [
   'ro12_423: 3r_4_1 - 12x + 123y  <= 34',
   '3r_4_1 - 12x + 123y  <= 34',
   'ew_23: 2x + 4t < 23',
-  'ew_23   : 2x + 4t < 23',
+  'ew_23   : 2x + 4t < 23'
 ]
 
 const tester = new Tester(test_cases, REGEX.GENERAL_CONSTRAINT)

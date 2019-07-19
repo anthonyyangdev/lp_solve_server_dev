@@ -20,6 +20,7 @@ module.exports = {
   TERMS: /[+-\s]*((\d+\.?|\d*\.\d+)?\s*[a-zA-Z]\w*|(\d*\.\d+|\d+\.?))/g,
   CONSTANT: /^[+-\s]*(\d+\.?|\d*\.\d+)$/,
   VARIABLE: /^[+-\s]*(\d+\.?|\d*\.\d+)?\s*[a-zA-Z]\w*$/,
-  // FOR_WHERE: /\s*(for\s*[a-zA-Z]\w*\s*\=\s*\d+\s*to\s*\d+(\s*\,\s*[a-zA-Z]\w*\s*\=\s*\d+\s*to\s*\d+)*|where\s*[a-zA-Z]\w*\s*\=\s*\d+(\s*\,\s*[a-zA-Z]\w*\s*\=\s*\d+\s*))(\s*\,\s*(for\s*[a-zA-Z]\w*\s*\=\s*\d+\s*to\s*\d+(\s*\,\s*[a-zA-Z]\w*\s*\=\s*\d+\s*to\s*\d+)*|where\s*[a-zA-Z]\w*\s*\=\s*\d+(\s*\,\s*[a-zA-Z]\w*\s*\=\s*\d+\s*)*))*\s*\:/gm,
-  // SUMMATION: /SUM\s*\[\s*[a-zA-Z]\w*\s*\=\s*\d+\s*to\s*\d+\s*\]\s*\(.*\)/,
+  FOR: /^for\s+[a-zA-Z]+\s*=\s*\d+\s+to\s+\d+\s*(\s*\,\s*[a-zA-Z]+\s*=\s*\d+\s+to\s+\d+)*\s*:/,
+  SUMMATION: /^sum\s*\[\s*[a-zA-Z]+\s*=\s*\d+\s+to\s+\d+\s*\]\s*\(\s*.*\s*\)/i,
+
 } 

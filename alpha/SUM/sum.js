@@ -79,5 +79,5 @@ function eval(line, name) {
   }
 }
 
-const result = eval(small_test, '24')
+const result = eval('sum [j = 1 to 2] (sum [m = 1 to 2](sum [p = 1 to 2](x_ijmp3)))<= 1000', '24')
 console.log(result)
