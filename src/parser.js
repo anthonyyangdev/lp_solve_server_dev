@@ -12,10 +12,53 @@ const CONSTRAINT_FORM = {
   RELATION: 'RELATION'
 }
 
+const TYPE_FUNC = {
+  /**
+   * Postcondition: The returned string is non-empty, so the string is truthy.
+   * @param {string} s A type declaration.
+   */
+  is_type_declaration: s => {
+    if ((regex.BINARY).test(s))
+      return TYPES.BIN
+    if ((regex.INTEGER).test(s))
+      return TYPES.INT
+    if ((regex.FREE).test(s))
+      return TYPES.UNRESTRICTED
+    return false
+  },
+  /**
+   * @param {string} s An objective function.
+   */
+  is_objective: s => (regex.OBJECTIVE).test(s),
+  /**
+   * Postcondition: The returned string is non-empty, so the string is truthy.
+   * Returns false if [s] is not a relation or a range constraint.
+   * @param {string} s An equation
+   */
+  is_constraint: s => {
+    if (regex.RELATION_CONSTRAINT.test(s)) {
+      return CONSTRAINT_FORM.RELATION
+    } else if (regex.RANGE_CONSTRAINT.test(s)) {
+      return CONSTRAINT_FORM.RANGE
+    } else {
+      return false
+    }
+  }
+}
+
 /**
  * Holds functions that use regular expressions to parse inputs.
  */
 const regex_func = {
+  is_valid_type: s => {
+    for (let fun in TYPE_FUNC) {
+      let result = fun(s)
+      if (result) {
+        return result
+      }
+    }
+    return false
+  },
   /**
    * @param {string} s
    */
