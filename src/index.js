@@ -89,13 +89,13 @@ app.get('/'), (req, res) => {
  * After processing the file, delete the file from the server system.
  * Return any errors and data produced by the child_process execution.
  * 
- * Requires: The lp_solve library.
  */
 app.post('/', (req, res) => {
   const content = req.body.content
   try {
     var formatted_model = parse(content)
-  } catch (e) {
+  }
+  catch (e) {
     res.send({
       error: {
         msg: e.message

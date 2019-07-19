@@ -17,7 +17,7 @@ module.exports = {
   RELATION_CONSTRAINT: relation_constraint,
   RANGE_CONSTRAINT: range_constraint,
   GENERAL_CONSTRAINT: general_constraint,
-  TERMS: /[+-\s]*(\d+\.?|\d*\.\d+)?\s*\w*/g,
+  TERMS: /[+-\s]*((\d+\.?|\d*\.\d+)?\s*[a-zA-Z]\w*|(\d*\.\d+|\d+\.?))/g,
   CONSTANT: /^[+-\s]*(\d+\.?|\d*\.\d+)$/,
   VARIABLE: /^[+-\s]*(\d+\.?|\d*\.\d+)?\s*[a-zA-Z]\w*$/
 } 

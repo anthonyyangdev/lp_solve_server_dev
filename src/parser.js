@@ -438,6 +438,30 @@ function parseConstraint(line, model, constraint, form) {
   }
 }
 
+function eval(line, model, noObjective, constraint) {
+  const {
+    is_constraint,
+    is_type_declaration,
+    is_objective } = regex_func
+  if (is_objective(line)) {
+    if (noObjective)
+      model = parseObjective(line, model)
+    else
+      throw new Error('Error: multiple objectives found.')
+    noObjective = false
+  } else if (is_type_declaration(line)) {
+    const type = is_type_declaration(line)
+    model = parseTypeStatement(line, model, type)
+  } else if (is_constraint(line)) {
+    const constraint_form = is_constraint(line)
+    model = parseConstraint(line, model, 'R' + constraint, constraint_form)
+    constraint++
+  } else {
+    throw new Error(`Cannot parse statement ${i + 1}:\nContent: ${line}`)
+  }
+  return { model, noObjective, constraint }
+}
+
 /**
  * 
  * Parses the input as a string array that is representing a linear 
@@ -447,33 +471,17 @@ function parseConstraint(line, model, constraint, form) {
  * @returns {Model}
  */
 function parseArray(input) {
-  const {
-    is_constraint,
-    is_type_declaration,
-    is_objective } = regex_func
   let model = new Model()
   let constraint = 1
   let noObjective = true
   for (let i = 0; i < input.length; i++) {
     // Get the string we're working with
     const currentLine = input[i];
+    result = eval(currentLine, model, noObjective, constraint)
+    model = result.model
+    constraint = result.constraint
+    noObjective = result.noObjective
     // Test to see if we're the objective
-    if (is_objective(currentLine)) {
-      if (noObjective)
-        model = parseObjective(currentLine, model)
-      else
-        throw new Error('Error: multiple objectives found.')
-      noObjective = false
-    } else if (is_type_declaration(currentLine)) {
-      const type = is_type_declaration(currentLine)
-      model = parseTypeStatement(currentLine, model, type)
-    } else if (is_constraint(currentLine)) {
-      const constraint_form = is_constraint(currentLine)
-      model = parseConstraint(currentLine, model, 'R' + constraint, constraint_form)
-      constraint++
-    } else {
-      throw new Error(`Cannot parse statement ${i + 1}:\nContent: ${currentLine}`)
-    }
   }
   return model
 }
@@ -489,6 +497,7 @@ function parseArray(input) {
  * @returns {string[]}
  */
 function stringToArray(input) {
+
   const DELIMITER = ';'
 
   input = input.replace(/\/\*(.|\s)*\*\/|\/\/.*/g, '')
@@ -519,6 +528,7 @@ function to_JSON(input) {
   if (typeof input === 'string') {
     input = stringToArray(input)
   }
+
   // Start iterating over the rows
   // to see what all we have
   return parseArray(input);
