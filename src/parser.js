@@ -56,7 +56,8 @@ const regex_func = {
    * Tests if the expression s is a for/where declaration.
    * @param {string} s
    */
-  is_for_where: s => regex.FOR_WHERE.test(s),
+  // is_for_where: s => regex.FOR_WHERE.test(s),
+
   /**
    * @param {string} s An expression.
    * @returns {string[]} An array of terms
