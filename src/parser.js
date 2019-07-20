@@ -314,7 +314,6 @@ function parseSummation(line, model) {
     const value = model.set[vars]
     full_expression = full_expression.replace(regex, value)
   }
-
   return full_expression
 }
 
@@ -642,9 +641,7 @@ function parseSetDeclare(line, model) {
     throw new Error(`The variable name is not valid for value declaration ${line}`)
   const value = mathjs.evaluate(right)
 
-  console.log(true, model)
   model.set[name] = value
-  console.log(false, model)
 
   return model
 }
