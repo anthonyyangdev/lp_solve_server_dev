@@ -4,7 +4,7 @@
 This is web-hosted backend server app deployed on Heroku that receives requests to process and solve linear programming optimization problems. It is inspired by the limited accessibility to the lpsolve IDE for non-Windows operating systems, such as MacOS. A complementary frontend web-app also deployed on Heroku can be found in [this Github repository](https://github.com/ayang4114/lp_solve_online_dev).
 
 ## How it works
-HTTP Requests are sent to the server either as a string or an array of strings. If sent as a string, then each statement must be ended with a single semi-colon (;). If sent as a string array, then each array entry is a separate statement and each of those statements does not end with semi-colon. The syntax is based on the [syntax used in the lpsolve IDE](http://lpsolve.sourceforge.net/5.5/). 
+HTTP Requests are sent to the server either as a string or an array of strings. If sent as a string, then each statement must be ended with a single semi-colon (;). If sent as a string array, then each array entry is a separate statement and each of those statements does not end with semi-colon. The syntax is based on the [syntax used in the lpsolve IDE](http://lpsolve.sourceforge.net/5.5/), with additional implementations including for and summation statements. The interface used to access this server can be found on [this GitHub repository](https://github.com/ayang4114/lp_solve_online_dev).
 
 ## Dependencies
 - [jsLPSolver](https://github.com/JWally/jsLPSolver)
