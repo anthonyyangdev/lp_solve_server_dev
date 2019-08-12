@@ -1,4 +1,4 @@
-# lpsolve_js
+# lp_solve_server_dev
 
 ## About
 This is web-hosted backend server app deployed on Heroku that receives requests to process and solve linear programming optimization problems. It is inspired by the limited accessibility to the lpsolve IDE for non-Windows operating systems, such as MacOS. A complementary frontend web-app also deployed on Heroku can be found in [this Github repository](https://github.com/ayang4114/lp_solve_online_dev).
