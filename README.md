@@ -6,7 +6,7 @@ This is web-hosted backend server app deployed on Heroku that receives requests 
 ## How it works
 HTTP Requests are sent to the server either as a string or an array of strings. If sent as a string, then each statement must be ended with a single semi-colon (;). If sent as a string array, then each array entry is a separate statement and each of those statements does not end with semi-colon. The syntax is based on the [syntax used in the lpsolve IDE](http://lpsolve.sourceforge.net/5.5/), with additional implementations including for and summation statements. The interface used to access this server can be found on [this GitHub repository](https://github.com/ayang4114/lp_solve_online_dev).
 
-### Syntax and Semantics
+## Syntax and Semantics
 Please read the README of [this GitHub repository](https://github.com/ayang4114/lp_solve_online_dev), which is the frontend build that uses this server. The README contains documentation for the syntax and semantics used to write a linear algebraic model that this server can parse, interpret, and solve.
 
 ## Dependencies
